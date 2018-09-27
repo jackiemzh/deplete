@@ -16,7 +16,7 @@ library(shinycssloaders)
 shinyUI(fluidPage(
                 theme = shinytheme("sandstone"),
                 
-                titlePanel("Removal model"),
+                titlePanel("DEPLETE"),
                 
                 # display loading when busy
                 tags$head(tags$style(type="text/css", "
