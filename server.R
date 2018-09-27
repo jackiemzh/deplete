@@ -1,8 +1,12 @@
+
 library(shiny)
 library(xlsx)
 library(markdown)
 library(DT)
-library(ReporteRs)
+#library(officer)
+#library(flextable)
+#library(rvg)
+#library(mschart)
 #library(shinydashboard)
 library(shinythemes)
 # library(shinyjs)
@@ -11,10 +15,14 @@ library(shinycssloaders)
 #
 
 
+#
+#############
+
 ## server.R ##
-shinyServer(function(input, output,session) {
+shinyServer(function(input, output, session) {
   
-    # reactive UI to reset (classic) inputs
+  
+  # reactive UI to reset (classic) inputs
   # if observe action button, reset to default
   observe({
     
@@ -29,11 +37,11 @@ shinyServer(function(input, output,session) {
                       label = paste("Covariates available?"),
                       choices = c("No","Yes"),
                       selected = c("No")
-    )
+                      )
   })
-  
+
   # reset UI in analysis tab
-  
+
   observe({
     
     input$reset_ana_button
@@ -42,7 +50,7 @@ shinyServer(function(input, output,session) {
     # updateActionButton(session,"run_ana_button",
     #                   label = "Run analysis again", 
     #                   icon = icon("chevron-circle-right", lib = "font-awesome")
-    #style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
+                       #style="color: #fff; background-color: #337ab7; border-color: #2e6da4"
     #                   )
     
     # reset data_colnum
@@ -76,7 +84,7 @@ shinyServer(function(input, output,session) {
     updateTabItems(session, "RD_panels", newvalue)
   })
   
-  
+
   observeEvent(input$link_to_tabpanel_ana_tab_RD, {
     newvalue <- "analysis_RD-panel"
     updateTabItems(session, "RD_panels", newvalue)
@@ -104,14 +112,14 @@ shinyServer(function(input, output,session) {
                       label = paste("Covariates available?"),
                       choices = c("No","Yes"),
                       selected = c("No")
-    )
+                      )
     # reset equ_secondary_num_yn to null
     updateSelectInput(session,
                       "equ_secondary_num_yn", # input name
                       label = paste("Equal number of seconary samples within each primary period?"),
                       choices = c("", "No","Yes"),
                       selected = c("")
-    )
+                      )
     
     # reset p type options to null
     updateSelectInput(session,
@@ -119,7 +127,7 @@ shinyServer(function(input, output,session) {
                       label = paste("Define capture probability type"),
                       choices = c("","All","Constant", "Covariates"),
                       selected = c("")
-    )
+                      )
     
     # reset phi type options to null
     updateSelectInput(session,
@@ -127,7 +135,7 @@ shinyServer(function(input, output,session) {
                       label = paste("Define transition probability type"),
                       choices = c("","All","Constant", "Covariates","Time-varying"),
                       selected = c("")
-    )
+                      )
     
   })
   
@@ -150,7 +158,7 @@ shinyServer(function(input, output,session) {
   })
   
   
-  
+
   
   
   
@@ -163,26 +171,26 @@ shinyServer(function(input, output,session) {
   # reset UI in results tab 
   # observe({
   #  input$reset_ana_button
-  
+    
   # shinyjs::reset("results-panel")
-  
+    
   #})
   
   #observe
   
   
-  # analysis-panel
+ # analysis-panel
   
   
-  #  run_analysis_buttion
+#  run_analysis_buttion
   
   
   
   #output$resetable_input <- renderUI({
   #  times <- input$reset_input
   #  div(id=letters[(times %% length(letters)) + 1],
-  
-  # add default settings
+        
+        # add default settings
   #      )
   # })
   
@@ -225,11 +233,11 @@ shinyServer(function(input, output,session) {
     
     if (input$cov_yn=="Yes") {
       
-      data_all<- dataInput()
-      
-      column_names<- colnames(data_all)
-      cov_names<- column_names[input$cov_col_range[1]:input$cov_col_range[2]]
-      
+    data_all<- dataInput()
+    
+    column_names<- colnames(data_all)
+    cov_names<- column_names[input$cov_col_range[1]:input$cov_col_range[2]]
+  
     }
     
     return(cov_names)
@@ -288,23 +296,31 @@ shinyServer(function(input, output,session) {
          xlab="sampling occasions",
          ylab="counts",
          main=paste("Predicted counts of", input$species_name, "removed.")
-    )
+         )
   })
   
   
+  # download_plot function
   download_plot<-reactive({
     
-    if (run_button_counts_RD$counts>0) {
-      
-      data_all<- isolate(dataInput())
-      data_ploints<-data_all[,input$data_colnum]
-      
-      plot(data_ploints,
-           pch=10,
-           xlab="sampling occasions",
-           ylab="counts",
-           main=paste("Predicted counts of", input$species_name, "removed.")
-      )
+    if (run_button_counts$counts>0) {
+
+    data_all<- isolate(dataInput())
+    data_ploints<-data_all[,input$data_colnum]
+    
+    # plot data points
+    plot(data_ploints,
+         pch=10,
+         xlab="sampling occasions",
+         ylab="counts",
+         main=paste("Predicted counts of", input$species_name, "removed.")
+         )
+    
+    #est_data<- kk.geo.pt.2cov.prediction(kk=2)$fitted.data.pt.2cov.times
+    #lines(c(1:T), est_data, col = 'black', lwd=2,lty=3)
+    
+    
+    
     } else {NULL}
     
   })
@@ -365,7 +381,7 @@ shinyServer(function(input, output,session) {
     
     return(sum_RD)
   })
-  
+
   
   # length of study
   T_RD<-reactive({
@@ -546,44 +562,44 @@ shinyServer(function(input, output,session) {
   # define the total no. of potential models to fit
   total_no_fits<-reactive({
     
-    if (input$cov_yn=="Yes") {
+  if (input$cov_yn=="Yes") {
+
+    if (no_covariate_available()==1) {
       
-      if (no_covariate_available()==1) {
-        
-        # if there is one cov
-        no_fits = 2 # i.e. p(c) and p(cov) 
-        
-        no_one_cov_cases = 1
-        
-        no_two_cov_cases = 0
-        
-      } else {
-        
-        # no. of one cov cases
-        no_one_cov_cases = no_covariate_available()
-        
-        # no. of two cov cases
-        no_two_cov_cases = choose(no_covariate_available(),2)*2 # addictive cases + addicative_interaction cases 
-        
-        # constant model + p(one_cov) cases + p(two_cov) cases
-        no_fits= 1 + no_one_cov_cases + no_two_cov_cases 
-      }
+      # if there is one cov
+      no_fits = 2 # i.e. p(c) and p(cov) 
+      
+      no_one_cov_cases = 1
+      
+      no_two_cov_cases = 0
+      
     } else {
       
-      # input$cov_yn=="No"
-      # fit geometric model only
+      # no. of one cov cases
+      no_one_cov_cases = no_covariate_available()
       
-      no_fits<-1
-      no_one_cov_cases<-0
-      no_two_cov_cases<-0
+      # no. of two cov cases
+      no_two_cov_cases = choose(no_covariate_available(),2)*2 # addictive cases + addicative_interaction cases 
+      
+      # constant model + p(one_cov) cases + p(two_cov) cases
+      no_fits= 1 + no_one_cov_cases + no_two_cov_cases 
     }
+  } else {
+    
+    # input$cov_yn=="No"
+    # fit geometric model only
+    
+    no_fits<-1
+    no_one_cov_cases<-0
+    no_two_cov_cases<-0
+  }
     
     return(list(no_fits=no_fits,
                 no_one_cov_cases=no_one_cov_cases,
                 no_two_cov_cases=no_two_cov_cases))
   })
   
-  
+
   
   two_cov_combin_index_vec <-reactive({
     
@@ -601,13 +617,13 @@ shinyServer(function(input, output,session) {
                 first_cov_index=first_cov_index,
                 second_cov_index=second_cov_index))
   })
-  
-  
+    
+    
   
   
   # define cov (max is 2) considered in the model
   zz<-reactive({
-    
+
     
     if (input$cov_yn=="Yes") {
       
@@ -623,7 +639,7 @@ shinyServer(function(input, output,session) {
       } else {
         
         # two cov case
-        
+         
         num_one_unique_cov_case<-total_no_fits()$no_one_cov_cases
         
         num_two_unique_cov_case<-choose(no_covariate_available(),2)
@@ -642,9 +658,9 @@ shinyServer(function(input, output,session) {
         ## one cov used in sub models within two cov cases
         for (jj in 1:num_one_unique_cov_case) {
           
-          cov_ind <- input$cov_col_range[1] + (jj-1)
-          cov[,1,jj+1]<- data_all[,cov_ind] -   mean( data_all[,cov_ind] )
-          
+             cov_ind <- input$cov_col_range[1] + (jj-1)
+             cov[,1,jj+1]<- data_all[,cov_ind] -   mean( data_all[,cov_ind] )
+             
         }
         
         
@@ -659,9 +675,9 @@ shinyServer(function(input, output,session) {
           # standarlise and update covariate array
           cov[,1,ii+1+num_one_unique_cov_case]<- data_all[,first_cov_ind] -   mean( data_all[,first_cov_ind] )
           cov[,2,ii+1+num_one_unique_cov_case]<- data_all[,second_cov_ind] - mean( data_all[,second_cov_ind] )
-          
+
         }
-        
+ 
       }
       
     } else {
@@ -695,114 +711,118 @@ shinyServer(function(input, output,session) {
     }
     
     
+    
     ## constant geometric model ONLY.
     
     # function to run the model
-    
-    fit.model.geo.ll<- function(param) {
-      try(optim(par=param,
-                fn=geo.ll, # make sure it's using geo.ll function for optimisation
-                method="BFGS",hessian=TRUE,
-                data=data1,x=x(),T=T(),D=D()),TRUE)}
-    
-    # make sure hessian is available
-    inv <- function(m) {class(try(solve(m),silent=T))=="matrix"} 
-    
-    # *** custermise the number of iterations
-    n.rep= input$num_iteration
-    
-    # initialise numeric and matrix 
-    p.test<-N0.test<-loglike.test<-numeric()
-    hessians.test <- list(matrix(rep(0,2*2), ncol=2)) # 2 is the length(param)
-    hessians.test <- rep(hessians.test,n.rep)
-    
-    
-    # *** update this for all models
-    time_spent<-numeric()
-    
-    # initialise iteration numbers
-    j=1
-    k=1
-    
-    # Start the clock for optimisation =-=-=-=-
-    ptm <- proc.time()
-    
-    # run iterations
-    while (j<(n.rep+1)) { 
-      
-      # random starting values
-      param=c(logit(runif(1,0.2,0.8)), log(runif(1,1,20)) )
-      
-      # run the model
-      fit <- fit.model.geo.ll(param)
-      
-      if (inv(fit$hessian)==TRUE) { # check if hessian is available
-        if (k<(n.rep+1)) {
+        
+        fit.model.geo.ll<- function(param) {
+          try(optim(par=param,
+                    fn=geo.ll, # make sure it's using geo.ll function for optimisation
+                    method="BFGS",hessian=TRUE,
+                    data=data1,x=x(),T=T(),D=D()),TRUE)}
+        
+        # make sure hessian is available
+        inv <- function(m) {class(try(solve(m),silent=T))=="matrix"} 
+        
+        # *** custermise the number of iterations
+        n.rep= isolate(input$num_iteration)
+        
+        # initialise numeric and matrix 
+        p.test<-N0.test<-loglike.test<-numeric()
+        hessians.test <- list(matrix(rep(0,2*2), ncol=2)) # 2 is the length(param)
+        hessians.test <- rep(hessians.test,n.rep)
+        
+        
+        # *** update this for all models
+        time_spent<-numeric()
+        
+        # initialise iteration numbers
+        j=1
+        k=1
+        
+        # Start the clock for optimisation =-=-=-=-
+        ptm <- proc.time()
+        
+        # run iterations
+        while (j<(n.rep+1)) { 
           
-          # record estimates for each iteration
-          p.test[k] <- expit(fit$par[1])
-          N0.test[k] <- exp(fit$par[3])
+          # random starting values
+          param=c(logit(runif(1,0.2,0.8)), log(runif(1,1,20)) )
           
-          # record hessians for each iteration
-          hessians.test[[k]]=fit$hessian
+          # run the model
+          fit <- fit.model.geo.ll(param)
           
+          if (inv(fit$hessian)==TRUE) { # check if hessian is available
+            if (k<(n.rep+1)) {
+              
+              # record estimates for each iteration
+              p.test[k] <- expit(fit$par[1])
+              N0.test[k] <- exp(fit$par[3])
+              
+              # record hessians for each iteration
+              hessians.test[[k]]=fit$hessian
+              
+              
+              # record loglike for each iteration
+              # these will be double checked by users
+              loglike.test[k]<- -fit$value
+              
+              k=k+1      
+            } }
+          j=j+1
           
-          # record loglike for each iteration
-          # these will be double checked by users
-          loglike.test[k]<- -fit$value
-          
-          k=k+1      
-        } }
-      j=j+1
-      
-      # the end of iterations
-    }
-    
-    # Stop the clock =-=-=-=-
-    t.record<-proc.time() - ptm
-    
-    # Time spent
-    time_spent<- as.numeric(names(table(t.record[1])))
-    
-    
-    # put together results for all iterations
-    AIC.test <- - 2*loglike.test + (2*length(param))
-    
-    mle.test<- data.frame(p=p.test,
-                          N0=N0.test,
-                          loglike=loglike.test,
-                          AIC= AIC.test)
-    
-    # observe the number of times hitting the MLEs
-    loglike.test<-signif(loglike.test, 5)
-    num.max.location<- length(which(loglike.test==max(loglike.test)))
-    
-    
-    # observe which iteration has MLEs
-    max.location<-which(loglike.test==max(loglike.test))[1]
-    
-    # record MLEs corresponding to the max.location
-    fit.p <- p.test[max.location]
-    fit.N <- N0.test[max.location]+D()
-    
-    # record the hessian corresponding to the max.location
-    fit.hessians <- hessians.test[[max.location]]
-    fit.loglike <- max(loglike.test)
-    fit.AIC <- - 2*loglike.test + (2*length(param))
-    
-    
-    # put together MLE results as well as loglike and AIC
-    fit.mle.results <- data.frame(p_int=fit.p,
-                                  N=fit.N,
-                                  loglike=fit.loglike,
-                                  AIC=fit.AIC)
-    
-    
-    ## --- the end of running p(c) model
-    
+          # the end of iterations
+        }
+        
+        # Stop the clock =-=-=-=-
+        t.record<-proc.time() - ptm
+        
+        # Time spent
+        time_spent<- as.numeric(names(table(t.record[1])))
+        
+        
+        # put together results for all iterations
+        AIC.test <- - 2*loglike.test + (2*length(param))
+        
+        mle.test<- data.frame(p=p.test,
+                              N0=N0.test,
+                              loglike=loglike.test,
+                              AIC= AIC.test)
+        
+        # observe the number of times hitting the MLEs
+        loglike.test<-signif(loglike.test, 7)
+        num.max.location<- length(which(loglike.test==max(loglike.test)))
+        
+        
+        # observe which iteration has MLEs
+        max.location<-which(loglike.test==max(loglike.test))[1]
+        
+        # record MLEs corresponding to the max.location
+        fit.p <- p.test[max.location]
+        fit.N <- N0.test[max.location]+D()
+        
+        
+        
+        # record the hessian corresponding to the max.location
+        fit.hessians <- hessians.test[[max.location]]
+        fit.loglike <- max(loglike.test)
+        fit.AIC <- - 2*loglike.test + (2*length(param))
+        
+        
+        # put together MLE results as well as loglike and AIC
+        fit.mle.results <- data.frame(p_int=fit.p,
+                                          N=fit.N,
+                                          loglike=fit.loglike,
+                                          AIC=fit.AIC)
+        
+        
+        ## --- the end of running p(c) model
+   
     return(list(mle.test=mle.test, # results for all iteration
                 hessians.test=hessians.test, # results for all iteration
                 fit.mle.results=fit.mle.results, # results for MLEs
+                fit.hessians=fit.hessians, # hessian for MLEs
                 time_spent=time_spent, # time spent
                 num.max.location=num.max.location # the number of times hitting the MLEs
     ))
@@ -841,122 +861,123 @@ shinyServer(function(input, output,session) {
     
     ## the (kk)th one covaraite geometric model (sub model in two cov cases) ONLY.
     
-    # choose one covariate for the (gg)th covariate
-    z <- zz()[,1,gg+1]  # +1 because the first covaraiete arrary is empty for p(c) model
-    
-    
-    ## ---- pt (z1)  model
-    
-    # function to run the model
-    
-    fit.model.geo.pt.cov.ll<- function(param) {
-      try(optim(par=param,
-                fn=geo.pt.cov.ll, # make sure it's using geo.pt.cov.ll function for optimisation
-                method="BFGS",hessian=TRUE,
-                data=data1,x.d=x.d(),T=T(),D=D(),z=z),TRUE)}
-    
-    # make sure hessian is available
-    inv <- function(m) {class(try(solve(m),silent=T))=="matrix"} 
-    
-    # custermise the number of iterations
-    n.rep= input$num_iteration
-    
-    # initialise numeric and matrix 
-    p.int.1cov.test<-p.slope.1cov.test1<-N0.1cov.test<-loglike.1cov.test<-numeric()
-    hessians.1cov.test <- list(matrix(rep(0,3*3), ncol=3)) # 3 is the length(param)
-    hessians.1cov.test <- rep(hessians.1cov.test,n.rep)
-    
-    
-    # *** update this for all models
-    time_spent.1cov<-numeric()
-    
-    # initialise iteration numbers
-    j=1
-    k=1
-    
-    # Start the clock for optimisation =-=-=-=-
-    ptm <- proc.time()
-    
-    # run iterations
-    while (j<(n.rep+1)) { 
-      
-      # random starting values
-      param=c(runif(2,-0.1,0.1), log(runif(1,1,20)) )
-      
-      # run the model
-      fit <- fit.model.geo.pt.cov.ll(param)
-      
-      if (inv(fit$hessian)==TRUE) { # check if hessian is available
-        if (k<(n.rep+1)) {
+        # choose one covariate for the (gg)th covariate
+        z <- zz()[,1,gg+1]  # +1 because the first covaraiete arrary is empty for p(c) model
+        
+        
+        ## ---- pt (z1)  model
+        
+        # function to run the model
+        
+        fit.model.geo.pt.cov.ll<- function(param) {
+          try(optim(par=param,
+                    fn=geo.pt.cov.ll, # make sure it's using geo.pt.cov.ll function for optimisation
+                    method="BFGS",hessian=TRUE,
+                    data=data1,x.d=x.d(),T=T(),D=D(),z=z),TRUE)}
+        
+        # make sure hessian is available
+        inv <- function(m) {class(try(solve(m),silent=T))=="matrix"} 
+        
+        # custermise the number of iterations
+        n.rep= isolate(input$num_iteration)
+        
+        # initialise numeric and matrix 
+        p.int.1cov.test<-p.slope.1cov.test1<-N0.1cov.test<-loglike.1cov.test<-numeric()
+        hessians.1cov.test <- list(matrix(rep(0,3*3), ncol=3)) # 3 is the length(param)
+        hessians.1cov.test <- rep(hessians.1cov.test,n.rep)
+        
+        
+        # *** update this for all models
+        time_spent.1cov<-numeric()
+        
+        # initialise iteration numbers
+        j=1
+        k=1
+        
+        # Start the clock for optimisation =-=-=-=-
+        ptm <- proc.time()
+        
+        # run iterations
+        while (j<(n.rep+1)) { 
           
-          # record estimates for each iteration
-          p.int.1cov.test[k] <- fit$par[1]
-          p.slope.1cov.test1[k] <- fit$par[2]
-          N0.1cov.test[k] <- exp(fit$par[3])
+          # random starting values
+          param=c(runif(2,-0.1,0.1), log(runif(1,1,20)) )
           
-          # record hessians for each iteration
-          hessians.1cov.test[[k]]=fit$hessian
+          # run the model
+          fit <- fit.model.geo.pt.cov.ll(param)
           
+          if (inv(fit$hessian)==TRUE) { # check if hessian is available
+            if (k<(n.rep+1)) {
+              
+              # record estimates for each iteration
+              p.int.1cov.test[k] <- fit$par[1]
+              p.slope.1cov.test1[k] <- fit$par[2]
+              N0.1cov.test[k] <- exp(fit$par[3])
+              
+              # record hessians for each iteration
+              hessians.1cov.test[[k]]=fit$hessian
+              
+              
+              # record loglike for each iteration
+              # these will be double checked by users
+              loglike.1cov.test[k]<- -fit$value
+              
+              k=k+1      
+            } }
+          j=j+1
           
-          # record loglike for each iteration
-          # these will be double checked by users
-          loglike.1cov.test[k]<- -fit$value
-          
-          k=k+1      
-        } }
-      j=j+1
-      
-      # the end of iterations
-    }
-    
-    # Stop the clock =-=-=-=-
-    t.record<-proc.time() - ptm
-    
-    # Time spent
-    time_spent.1cov<- as.numeric(names(table(t.record[1])))
-    
-    
-    # put together results for all iterations
-    AIC.1cov.test <- - 2*loglike.1cov.test + (2*length(param))
-    
-    mle.test.1cov<- data.frame(p_int=p.int.1cov.test,
-                               p_slope1=p.slope.1cov.test1,
-                               N0=N0.1cov.test,
-                               loglike=loglike.1cov.test,
-                               AIC= AIC.1cov.test)
-    
-    # observe the number of times hitting the MLEs
-    loglike.1cov.test<-signif(loglike.1cov.test, 5)
-    num.max.location.1cov<- length(which(loglike.1cov.test==max(loglike.1cov.test)))
-    
-    
-    # observe which iteration has MLEs
-    max.location.1cov<-which(loglike.1cov.test==max(loglike.1cov.test))[1]
-    
-    # record MLEs corresponding to the max.location.2cov
-    fit.p.int.1cov <- p.int.1cov.test[max.location.1cov]
-    fit.p.slope.1cov.1 <- p.slope.1cov.test1[max.location.1cov]
-    fit.N.1cov <- N0.1cov.test[max.location.1cov]+D()
-    
-    # record the hessian corresponding to the max.location.2cov
-    fit.hessians.1cov <- hessians.1cov.test[[max.location.1cov]]
-    fit.loglike.1cov <- max(loglike.1cov.test)
-    fit.AIC.1cov<- - 2*fit.loglike.1cov + (2*length(param))
-    
-    
-    # put together MLE results as well as loglike and AIC
-    fit.mle.results.1cov<- data.frame(p_int=fit.p.int.1cov,
-                                      p_slope1=fit.p.slope.1cov.1,
-                                      N=fit.N.1cov,
-                                      loglike=fit.loglike.1cov,
-                                      AIC=fit.AIC.1cov)
-    
-    
-    ## --- the end of running p(z1) model
-    
+          # the end of iterations
+        }
+        
+        # Stop the clock =-=-=-=-
+        t.record<-proc.time() - ptm
+        
+        # Time spent
+        time_spent.1cov<- as.numeric(names(table(t.record[1])))
+        
+        
+        # put together results for all iterations
+        AIC.1cov.test <- - 2*loglike.1cov.test + (2*length(param))
+        
+        mle.test.1cov<- data.frame(p_int=p.int.1cov.test,
+                                   p_slope1=p.slope.1cov.test1,
+                                   N0=N0.1cov.test,
+                                   loglike=loglike.1cov.test,
+                                   AIC= AIC.1cov.test)
+        
+        # observe the number of times hitting the MLEs
+        loglike.1cov.test<-signif(loglike.1cov.test, 7)
+        num.max.location.1cov<- length(which(loglike.1cov.test==max(loglike.1cov.test)))
+        
+        
+        # observe which iteration has MLEs
+        max.location.1cov<-which(loglike.1cov.test==max(loglike.1cov.test))[1]
+        
+        # record MLEs corresponding to the max.location.2cov
+        fit.p.int.1cov <- p.int.1cov.test[max.location.1cov]
+        fit.p.slope.1cov.1 <- p.slope.1cov.test1[max.location.1cov]
+        fit.N.1cov <- N0.1cov.test[max.location.1cov]+D()
+        
+        # record the hessian corresponding to the max.location.2cov
+        fit.hessians.1cov <- hessians.1cov.test[[max.location.1cov]]
+        fit.loglike.1cov <- max(loglike.1cov.test)
+        fit.AIC.1cov<- - 2*max(loglike.1cov.test) + (2*length(param))
+        
+        
+        # put together MLE results as well as loglike and AIC
+        fit.mle.results.1cov<- data.frame(p_int=fit.p.int.1cov,
+                                          p_slope1=fit.p.slope.1cov.1,
+                                          N=fit.N.1cov,
+                                          loglike=fit.loglike.1cov,
+                                          AIC=fit.AIC.1cov)
+        
+        
+        ## --- the end of running p(z1) model
+
     return(list(mle.test.1cov=mle.test.1cov, # results for all iteration
                 hessians.1cov.test=hessians.1cov.test, # results for all iteration
                 fit.mle.results.1cov=fit.mle.results.1cov, # results for MLEs
+                fit.hessians.1cov=fit.hessians.1cov, # hessian for MLEs
                 time_spent.1cov=time_spent.1cov, # time spent
                 num.max.location.1cov=num.max.location.1cov # the number of times hitting the MLEs
     ))
@@ -984,7 +1005,7 @@ shinyServer(function(input, output,session) {
     
     data_all<- dataInput()
     data1=data_all[,input$data_colnum]
-    
+
     # pt function for two covs
     geo.pt.2cov.ll <- function (param,data,x.d,T,D,z1,z2){
       
@@ -999,6 +1020,22 @@ shinyServer(function(input, output,session) {
       
       return(-logL)
     }
+    
+    
+    fit.geo.pt.2cov.times.ll<-function (fit_param,data,T,z1,z2) {
+      
+      
+      ept.p<- expit(fit_param[1]+fit_param[2]*z1+fit_param[3]*z2+fit_param[4]*z1*z2)
+      ept.N<- fit_param[5]
+      
+      ept.data<-numeric(); ept.data[1]<-ept.N*ept.p[1]
+      
+      for(i in 2:T) {ept.data[i]<- ept.N*prod(1-ept.p[1:i-1])*ept.p[i]}
+      
+      return(ept.data)
+    }
+    
+    
     
     # pt function for two covs
     geo.pt.2cov.times.ll <- function (param,data,x.d,T,D,z1,z2){
@@ -1016,269 +1053,296 @@ shinyServer(function(input, output,session) {
     }
     
     
+    fit.geo.pt.2cov.times.ll<-function (fit_param,data,T,z1,z2) {
+      
+      
+      ept.p<- expit(fit_param[1]+fit_param[2]*z1+fit_param[3]*z2+fit_param[4]*z1*z2)
+      ept.N<- fit_param[5]
+      
+      ept.data<-numeric(); ept.data[1]<-ept.N*ept.p[1]
+      
+      for(i in 2:T) {ept.data[i]<- ept.N*prod(1-ept.p[1:i-1])*ept.p[i]}
+      
+      return(ept.data)
+    }
+    
+    
+    
     ## the (kk)th combination of two covaraites geo model ONLY.
     
     #kk_results<-reactive({
-    
-    # run the model according to the no. of cov
-    
-    if (input$cov_yn=="Yes") {
       
-      if (no_covariate_available()>1) {
+      # run the model according to the no. of cov
+      
+      if (input$cov_yn=="Yes") {
         
-        # this function deals with two cov cases ONLY.
-        
-        # choose covariates for the (kk)th combination of covariates
-        z1=zz()[,1,kk+1+total_no_fits()$no_one_cov_cases] 
-        z2=zz()[,2,kk+1+total_no_fits()$no_one_cov_cases] 
-        
-        
-        ## ---- pt (z1+z2) additive model
-        
-        # function to run the model
-        
-        fit.model.geo.pt.2cov.ll<- function(param) {
-          try(optim(par=param,
-                    fn=geo.pt.2cov.ll, # make sure it's using geo.pt.2cov.ll function for optimisation
-                    method="BFGS",hessian=TRUE,
-                    data=data1,x.d=x.d(),T=T(),D=D(),z1=z1,z2=z2),TRUE)}
-        
-        # make sure hessian is available
-        inv <- function(m) {class(try(solve(m),silent=T))=="matrix"} 
-        
-        # custermise the number of iterations
-        n.rep= input$num_iteration
-        
-        # initialise numeric and matrix 
-        p.int.2cov.test<-p.slope.2cov.test1<-p.slope.2cov.test2<-N0.2cov.test<-loglike.2cov.test<-numeric()
-        hessians.2cov.test <- list(matrix(rep(0,4*4), ncol=4)) # 4 is the length(param)
-        hessians.2cov.test <- rep(hessians.2cov.test,n.rep)
-        
-        
-        # update this for all models
-        time_spent.2cov<-numeric()
-        
-        # initialise iteration numbers
-        j=1
-        k=1
-        
-        # Start the clock for optimisation =-=-=-=-
-        ptm <- proc.time()
-        
-        # run iterations
-        while (j<(n.rep+1)) { 
+        if (no_covariate_available()>1) {
           
-          # random starting values
-          param=c(runif(3,-0.1,0.1), log(runif(1,1,20)) )
+          # this function deals with two cov cases ONLY.
           
-          # run the model
-          fit <- fit.model.geo.pt.2cov.ll(param)
+          # choose covariates for the (kk)th combination of covariates
+          z1=zz()[,1,kk+1+total_no_fits()$no_one_cov_cases] 
+          z2=zz()[,2,kk+1+total_no_fits()$no_one_cov_cases] 
           
-          if (inv(fit$hessian)==TRUE) { # check if hessian is available
-            if (k<(n.rep+1)) {
-              
-              # record estimates for each iteration
-              p.int.2cov.test[k] <- fit$par[1]
-              p.slope.2cov.test1[k] <- fit$par[2]
-              p.slope.2cov.test2[k] <- fit$par[3]
-              N0.2cov.test[k] <- exp(fit$par[4])
-              
-              # record hessians for each iteration
-              hessians.2cov.test[[k]]=fit$hessian
-              
-              
-              # record loglike for each iteration
-              # these will be double checked by users
-              loglike.2cov.test[k]<- -fit$value
-              
-              k=k+1      
-            } }
-          j=j+1
           
-          # the end of iterations
+          ## ---- pt (z1+z2) additive model
+          
+          # function to run the model
+          
+          fit.model.geo.pt.2cov.ll<- function(param) {
+                      try(optim(par=param,
+                      fn=geo.pt.2cov.ll, # make sure it's using geo.pt.2cov.ll function for optimisation
+                      method="BFGS",hessian=TRUE,
+                      data=data1,x.d=x.d(),T=T(),D=D(),z1=z1,z2=z2),TRUE)}
+          
+          # make sure hessian is available
+          inv <- function(m) {class(try(solve(m),silent=T))=="matrix"} 
+          
+          # custermise the number of iterations
+          n.rep= isolate(input$num_iteration)
+
+          # initialise numeric and matrix 
+          p.int.2cov.test<-p.slope.2cov.test1<-p.slope.2cov.test2<-N0.2cov.test<-loglike.2cov.test<-numeric()
+          hessians.2cov.test <- list(matrix(rep(0,4*4), ncol=4)) # 4 is the length(param)
+          hessians.2cov.test <- rep(hessians.2cov.test,n.rep)
+          
+          
+          # update this for all models
+          time_spent.2cov<-numeric()
+          
+          # initialise iteration numbers
+          j=1
+          k=1
+          
+          # Start the clock for optimisation =-=-=-=-
+          ptm <- proc.time()
+          
+          # run iterations
+          while (j<(n.rep+1)) { 
+          
+            # random starting values
+            param=c(runif(3,-0.1,0.1), log(runif(1,1,20)) )
+            
+            # run the model
+            fit <- fit.model.geo.pt.2cov.ll(param)
+            
+            if (inv(fit$hessian)==TRUE) { # check if hessian is available
+              if (k<(n.rep+1)) {
+                
+                # record estimates for each iteration
+                p.int.2cov.test[k] <- fit$par[1]
+                p.slope.2cov.test1[k] <- fit$par[2]
+                p.slope.2cov.test2[k] <- fit$par[3]
+                N0.2cov.test[k] <- exp(fit$par[4])
+                
+                # record hessians for each iteration
+                hessians.2cov.test[[k]]=fit$hessian
+                
+                
+                # record loglike for each iteration
+                # these will be double checked by users
+                loglike.2cov.test[k]<- -fit$value
+                
+                k=k+1      
+              } }
+            j=j+1
+            
+            # the end of iterations
+          }
+          
+          # Stop the clock =-=-=-=-
+          t.record<-proc.time() - ptm
+          
+          # Time spent
+          time_spent.2cov<- as.numeric(names(table(t.record[1])))
+         
+          
+          # put together results for all iterations
+          AIC.2cov.test <- - 2*loglike.2cov.test + (2*length(param))
+          
+                mle.test.2cov<- data.frame(p_int=p.int.2cov.test,
+                                           p_slope1=p.slope.2cov.test1,
+                                           p_slope2=p.slope.2cov.test2,
+                                           N0=N0.2cov.test,
+                                           loglike=loglike.2cov.test,
+                                           AIC= AIC.2cov.test)
+          
+          # observe the number of times hitting the MLEs
+          loglike.2cov.test<-signif(loglike.2cov.test, 7)
+          num.max.location.2cov<- length(which(loglike.2cov.test==max(loglike.2cov.test)))
+                
+           
+          # observe which iteration has MLEs
+          max.location.2cov<-which(loglike.2cov.test==max(loglike.2cov.test))[1]
+          
+          # record MLEs corresponding to the max.location.2cov
+          fit.p.int.2cov <- p.int.2cov.test[max.location.2cov]
+          fit.p.slope.2cov.1 <- p.slope.2cov.test1[max.location.2cov]
+          fit.p.slope.2cov.2 <- p.slope.2cov.test2[max.location.2cov]
+          fit.N.2cov <- N0.2cov.test[max.location.2cov]+D()
+          
+          # record the hessian corresponding to the max.location.2cov
+          fit.hessians.2cov <- hessians.2cov.test[[max.location.2cov]]
+          fit.loglike.2cov <- max(loglike.2cov.test)
+          fit.AIC.2cov<- - 2*fit.loglike.2cov + (2*length(param))
+
+          
+          # put together MLE results as well as loglike and AIC
+                fit.mle.results.2cov<- data.frame(p_int=fit.p.int.2cov,
+                                                  p_slope1=fit.p.slope.2cov.1,
+                                                  p_slope2=fit.p.slope.2cov.2,
+                                                  N=fit.N.2cov,
+                                                  loglike=fit.loglike.2cov,
+                                                  AIC=fit.AIC.2cov)
+
+                    
+          ## --- the end of pt (z1+z2) additive model
+          
+          
+          
+          ## ---- pt (z1+z2+z1*z2) interaction model
+          
+          # function to run the model
+          
+          fit.model.geo.pt.2cov.times.ll<- function(param) {
+            try(optim(par=param,
+                      fn=geo.pt.2cov.times.ll, # make sure it's using geo.pt.2cov.times.ll function for optimisation
+                      method="BFGS",hessian=TRUE,
+                      data=data1,x.d=x.d(),T=T(),D=D(),z1=z1,z2=z2),TRUE)}
+          
+          # make sure hessian is available
+          inv <- function(m) {class(try(solve(m),silent=T))=="matrix"} 
+          
+          # custermise the number of iterations
+          n.rep= isolate(input$num_iteration)
+          
+          # initialise numeric and matrix 
+          p.int.2cov.times.test<-p.slope.2cov.times.test1<-p.slope.2cov.times.test2<-p.slope.2cov.times.test3<-N0.2cov.times.test<-loglike.2cov.times.test<-numeric()
+          hessians.2cov.times.test <- list(matrix(rep(0,5*5), ncol=5)) # 5 is the length(param)
+          hessians.2cov.times.test <- rep(hessians.2cov.times.test,n.rep)
+          
+          
+          # update this for all models
+          time_spent.2cov.times<-numeric()
+          
+          # initialise iteration numbers
+          j=1
+          k=1
+          
+          # Start the clock for optimisation =-=-=-=-
+          ptm <- proc.time()
+          
+          # run iterations
+          while (j<(n.rep+1)) { 
+            
+            # random starting values
+            param=c(runif(4,-0.1,0.1), log(runif(1,1,20)) )
+            
+            # run the model
+            fit <- fit.model.geo.pt.2cov.times.ll(param)
+            
+            if (inv(fit$hessian)==TRUE) { # check if hessian is available
+              if (k<(n.rep+1)) {
+                
+                # record estimates for each iteration
+                p.int.2cov.times.test[k] <- fit$par[1]
+                p.slope.2cov.times.test1[k] <- fit$par[2]
+                p.slope.2cov.times.test2[k] <- fit$par[3]
+                p.slope.2cov.times.test3[k] <- fit$par[4]
+                N0.2cov.times.test[k] <- exp(fit$par[5])
+                
+                # record hessians for each iteration
+                hessians.2cov.times.test[[k]]=fit$hessian
+                
+                
+                # record loglike for each iteration
+                # these will be double checked by users
+                loglike.2cov.times.test[k]<- -fit$value
+                
+                k=k+1      
+              } }
+            j=j+1
+          }
+            
+          # Stop the clock =-=-=-=-
+          t.record<-proc.time() - ptm
+          
+          # Time spent
+          time_spent.2cov.times<- as.numeric(names(table(t.record[1])))
+          
+          
+          # put together results for all iterations
+          AIC.2cov.times.test <- - 2*loglike.2cov.times.test + (2*length(param))
+          
+          mle.test.2cov.times<- data.frame(p_int=p.int.2cov.times.test,
+                                                  p_slope1=p.slope.2cov.times.test1,
+                                                  p_slope2=p.slope.2cov.times.test2,
+                                                  p_slope3=p.slope.2cov.times.test3,
+                                                  N0=N0.2cov.times.test,
+                                                  loglike=loglike.2cov.times.test,
+                                                  AIC= AIC.2cov.times.test)
+          
+          
+          # observe the number of times hitting the MLEs
+          loglike.2cov.times.test<-signif(loglike.2cov.times.test, 7)
+          num.max.location.2cov.times<- length(which(loglike.2cov.times.test==max(loglike.2cov.times.test)))
+          
+          # observe which iteration has MLEs
+          max.location.2cov.times<-which(loglike.2cov.times.test==max(loglike.2cov.times.test))[1]
+          
+          # record MLEs corresponding to the max.location.2cov.times
+          fit.p.int.2cov.times <- p.int.2cov.times.test[max.location.2cov.times]
+          fit.p.slope.2cov.times.1 <- p.slope.2cov.times.test1[max.location.2cov.times]
+          fit.p.slope.2cov.times.2 <- p.slope.2cov.times.test2[max.location.2cov.times]
+          fit.p.slope.2cov.times.3 <- p.slope.2cov.times.test3[max.location.2cov.times]
+          fit.N.2cov.times <- N0.2cov.times.test[max.location.2cov.times] + D()
+          
+          # fitted data
+          fit_param<-c(fit.p.int.2cov.times,
+                       fit.p.slope.2cov.times.1,
+                       fit.p.slope.2cov.times.2,
+                       fit.p.slope.2cov.times.3,
+                       fit.N.2cov.times)
+          
+          fitted.data.pt.2cov.times <- fit.geo.pt.2cov.times.ll(fit_param=fit_param,data=data1,T=T(),z1=z1,z2=z2)
+          
+          
+          # record the hessian corresponding to the max.location.2cov.times
+          fit.hessians.2cov.times <- hessians.2cov.times.test[[max.location.2cov.times]]
+          fit.loglike.2cov.times <- max(loglike.2cov.times.test)
+          fit.AIC.2cov.times <- - 2*fit.loglike.2cov.times + (2*length(param))
+          
+          # put together MLE results as well as loglike and AIC
+          fit.mle.results.2cov.times<- data.frame(p_int=fit.p.int.2cov.times,
+                                                 p_slope1=fit.p.slope.2cov.times.1,
+                                                 p_slope2=fit.p.slope.2cov.times.2,
+                                                 p_slope3=fit.p.slope.2cov.times.3,
+                                                 N=fit.N.2cov.times,
+                                                 loglike=fit.loglike.2cov.times,
+                                                 AIC=fit.AIC.2cov.times)
+          
+          
+          
+          
+          ## --- pt (z1+z2+z1*z2) interaction model
+            
         }
-        
-        # Stop the clock =-=-=-=-
-        t.record<-proc.time() - ptm
-        
-        # Time spent
-        time_spent.2cov<- as.numeric(names(table(t.record[1])))
-        
-        
-        # put together results for all iterations
-        AIC.2cov.test <- - 2*loglike.2cov.test + (2*length(param))
-        
-        mle.test.2cov<- data.frame(p_int=p.int.2cov.test,
-                                   p_slope1=p.slope.2cov.test1,
-                                   p_slope2=p.slope.2cov.test2,
-                                   N0=N0.2cov.test,
-                                   loglike=loglike.2cov.test,
-                                   AIC= AIC.2cov.test)
-        
-        # observe the number of times hitting the MLEs
-        loglike.2cov.test<-signif(loglike.2cov.test, 5)
-        num.max.location.2cov<- length(which(loglike.2cov.test==max(loglike.2cov.test)))
-        
-        
-        # observe which iteration has MLEs
-        max.location.2cov<-which(loglike.2cov.test==max(loglike.2cov.test))[1]
-        
-        # record MLEs corresponding to the max.location.2cov
-        fit.p.int.2cov <- p.int.2cov.test[max.location.2cov]
-        fit.p.slope.2cov.1 <- p.slope.2cov.test1[max.location.2cov]
-        fit.p.slope.2cov.2 <- p.slope.2cov.test2[max.location.2cov]
-        fit.N.2cov <- N0.2cov.test[max.location.2cov]+D()
-        
-        # record the hessian corresponding to the max.location.2cov
-        fit.hessians.2cov <- hessians.2cov.test[[max.location.2cov]]
-        fit.loglike.2cov <- max(loglike.2cov.test)
-        fit.AIC.2cov<- - 2*fit.loglike.2cov + (2*length(param))
-        
-        
-        # put together MLE results as well as loglike and AIC
-        fit.mle.results.2cov<- data.frame(p_int=fit.p.int.2cov,
-                                          p_slope1=fit.p.slope.2cov.1,
-                                          p_slope2=fit.p.slope.2cov.2,
-                                          N=fit.N.2cov,
-                                          loglike=fit.loglike.2cov,
-                                          AIC=fit.AIC.2cov)
-        
-        
-        ## --- the end of pt (z1+z2) additive model
-        
-        
-        
-        ## ---- pt (z1+z2+z1*z2) interaction model
-        
-        # function to run the model
-        
-        fit.model.geo.pt.2cov.times.ll<- function(param) {
-          try(optim(par=param,
-                    fn=geo.pt.2cov.times.ll, # make sure it's using geo.pt.2cov.times.ll function for optimisation
-                    method="BFGS",hessian=TRUE,
-                    data=data1,x.d=x.d(),T=T(),D=D(),z1=z1,z2=z2),TRUE)}
-        
-        # make sure hessian is available
-        inv <- function(m) {class(try(solve(m),silent=T))=="matrix"} 
-        
-        # custermise the number of iterations
-        n.rep= input$num_iteration
-        
-        # initialise numeric and matrix 
-        p.int.2cov.times.test<-p.slope.2cov.times.test1<-p.slope.2cov.times.test2<-p.slope.2cov.times.test3<-N0.2cov.times.test<-loglike.2cov.times.test<-numeric()
-        hessians.2cov.times.test <- list(matrix(rep(0,5*5), ncol=5)) # 5 is the length(param)
-        hessians.2cov.times.test <- rep(hessians.2cov.times.test,n.rep)
-        
-        
-        # update this for all models
-        time_spent.2cov.times<-numeric()
-        
-        # initialise iteration numbers
-        j=1
-        k=1
-        
-        # Start the clock for optimisation =-=-=-=-
-        ptm <- proc.time()
-        
-        # run iterations
-        while (j<(n.rep+1)) { 
-          
-          # random starting values
-          param=c(runif(4,-0.1,0.1), log(runif(1,1,20)) )
-          
-          # run the model
-          fit <- fit.model.geo.pt.2cov.times.ll(param)
-          
-          if (inv(fit$hessian)==TRUE) { # check if hessian is available
-            if (k<(n.rep+1)) {
-              
-              # record estimates for each iteration
-              p.int.2cov.times.test[k] <- fit$par[1]
-              p.slope.2cov.times.test1[k] <- fit$par[2]
-              p.slope.2cov.times.test2[k] <- fit$par[3]
-              p.slope.2cov.times.test3[k] <- fit$par[4]
-              N0.2cov.times.test[k] <- exp(fit$par[5])
-              
-              # record hessians for each iteration
-              hessians.2cov.times.test[[k]]=fit$hessian
-              
-              
-              # record loglike for each iteration
-              # these will be double checked by users
-              loglike.2cov.times.test[k]<- -fit$value
-              
-              k=k+1      
-            } }
-          j=j+1
-        }
-        
-        # Stop the clock =-=-=-=-
-        t.record<-proc.time() - ptm
-        
-        # Time spent
-        time_spent.2cov.times<- as.numeric(names(table(t.record[1])))
-        
-        
-        # put together results for all iterations
-        AIC.2cov.times.test <- - 2*loglike.2cov.times.test + (2*length(param))
-        
-        mle.test.2cov.times<- data.frame(p_int=p.int.2cov.times.test,
-                                         p_slope1=p.slope.2cov.times.test1,
-                                         p_slope2=p.slope.2cov.times.test2,
-                                         p_slope3=p.slope.2cov.times.test3,
-                                         N0=N0.2cov.times.test,
-                                         loglike=loglike.2cov.times.test,
-                                         AIC= AIC.2cov.times.test)
-        
-        
-        # observe the number of times hitting the MLEs
-        loglike.2cov.times.test<-signif(loglike.2cov.times.test, 5)
-        num.max.location.2cov.times<- length(which(loglike.2cov.times.test==max(loglike.2cov.times.test)))
-        
-        # observe which iteration has MLEs
-        max.location.2cov.times<-which(loglike.2cov.times.test==max(loglike.2cov.times.test))[1]
-        
-        # record MLEs corresponding to the max.location.2cov.times
-        fit.p.int.2cov.times <- p.int.2cov.times.test[max.location.2cov.times]
-        fit.p.slope.2cov.times.1 <- p.slope.2cov.times.test1[max.location.2cov.times]
-        fit.p.slope.2cov.times.2 <- p.slope.2cov.times.test2[max.location.2cov.times]
-        fit.p.slope.2cov.times.3 <- p.slope.2cov.times.test3[max.location.2cov.times]
-        fit.N.2cov.times <- N0.2cov.times.test[max.location.2cov.times] + D()
-        
-        
-        # record the hessian corresponding to the max.location.2cov.times
-        fit.hessians.2cov.times <- hessians.2cov.times.test[[max.location.2cov.times]]
-        fit.loglike.2cov.times <- max(loglike.2cov.times.test)
-        fit.AIC.2cov.times <- - 2*fit.loglike.2cov.times + (2*length(param))
-        
-        # put together MLE results as well as loglike and AIC
-        fit.mle.results.2cov.times<- data.frame(p_int=fit.p.int.2cov.times,
-                                                p_slope1=fit.p.slope.2cov.times.1,
-                                                p_slope2=fit.p.slope.2cov.times.2,
-                                                p_slope3=fit.p.slope.2cov.times.3,
-                                                N=fit.N.2cov.times,
-                                                loglike=fit.loglike.2cov.times,
-                                                AIC=fit.AIC.2cov.times)
-        
-        
-        
-        
-        ## --- pt (z1+z2+z1*z2) interaction model
-        
-      }
-    } 
-    
+      } 
+ 
     return(list(mle.test.2cov=mle.test.2cov, # results for all iteration
                 mle.test.2cov.times=mle.test.2cov.times, # results for all iteration
                 hessians.2cov.test=hessians.2cov.test,
                 hessians.2cov.times.test,hessians.2cov.times.test,
                 fit.mle.results.2cov=fit.mle.results.2cov, # results for MLEs
                 fit.mle.results.2cov.times=fit.mle.results.2cov.times, # results for MLEs
+                fitted.data.pt.2cov.times=fitted.data.pt.2cov.times, # fitted.data
+                fit.hessians.2cov=fit.hessians.2cov,
+                fit.hessians.2cov.times=fit.hessians.2cov.times,
                 time_spent.2cov=time_spent.2cov, # time spent
                 time_spent.2cov.times=time_spent.2cov.times, # time spent,
                 num.max.location.2cov=num.max.location.2cov, # the number of times hitting the MLEs
                 num.max.location.2cov.times=num.max.location.2cov.times # # the number of times hitting the MLEs 
-    ))
+                ))
     
   }
   
@@ -1303,7 +1367,7 @@ shinyServer(function(input, output,session) {
       
       # always run constant model
       pc.prediction <-hh.geo.pc.prediction(hh=1)
-      
+    
       
       if (input$cov_yn=="Yes") {
         
@@ -1366,13 +1430,13 @@ shinyServer(function(input, output,session) {
     }
     
     # --- the end of action button condition 
-    
+        
     return(list(pc.prediction=pc.prediction,
                 pt.1cov.prediction=pt.1cov.prediction,
                 pt.2cov.prediction=pt.2cov.prediction
-    ))
+                ))
     
-  })
+    })
   
   
   
@@ -1388,15 +1452,16 @@ shinyServer(function(input, output,session) {
     
     if (run_button_counts$counts!=0) {
       
+      #*** add structure of no. of cov
       
-      
+      ## >= two cov available
       # AIC values
       geo.pt.aic<- numeric()
       
       geo.pt.aic[1]<-all.geo.prediction()$pc.prediction$fit.mle.results$AIC
       
       for (ii in 1:total_no_fits()$no_one_cov_cases ) {
-        geo.pt.aic[ii+1] < all.geo.prediction()$pt.1cov.prediction[[ii]]$fit.mle.results.1cov$AIC
+        geo.pt.aic[ii+1]<- -2*(all.geo.prediction()$pt.1cov.prediction[[ii]]$fit.mle.results.1cov$loglike) + 2*3
       }
       
       for (jj in 1:choose(no_covariate_available(),2) ) {
@@ -1454,13 +1519,18 @@ shinyServer(function(input, output,session) {
       
       
       
-      # end of 
-    } 
-    
-    
-    
-    
-    
+      
+      ### predicted estimates of the best model with the lowest AIC value
+      
+      
+      
+      ### predicted counts of the best model with the lowest AIC value
+      
+      
+      
+      # the end of action button
+    }
+
     
     return(list(geo.pt.no.param=geo.pt.no.param,
                 geo.pt.maxlogl=geo.pt.maxlogl,
@@ -1481,7 +1551,7 @@ shinyServer(function(input, output,session) {
   # model comparison results table for one combination of two cov
   geo.model.tab<-reactive({ 
     
-    if (run_button_counts$counts!=0) {
+  if (run_button_counts$counts!=0) {
       
     model.tab.results<-data.frame(
       Model = geo.aic.models()$model.names.ordered,
@@ -1491,13 +1561,11 @@ shinyServer(function(input, output,session) {
       AIC=geo.aic.models()$aic.ordered,
       delta.AIC= geo.aic.models()$delta.aic.ordered
     )
-    
     } else {
       
       model.tab.results=NULL
       
     }
-    
     model.tab.results
   })
   
@@ -1687,7 +1755,7 @@ shinyServer(function(input, output,session) {
   no_covariate_available_RD<-reactive({
     
     if (input$cov_yn_RD=="Yes") {
-      no_cov <- input$cov_col_range_RD[2]-input$cov_col_range_RD[1]+1
+    no_cov <- input$cov_col_range_RD[2]-input$cov_col_range_RD[1]+1
     } else {no_cov<- 0}
     
     return(no_cov)
@@ -1700,73 +1768,73 @@ shinyServer(function(input, output,session) {
     
     if ( input_not_null == TRUE ) {
       
-      if (input$cov_yn_RD == "Yes") {
-        
-        if (input$phi_type_RD=="All" & input$p_type_RD=="All") {
-          no_fits<- (2+no_covariate_available_RD()) * (1+no_covariate_available_RD())
-        }
-        
-        if (input$phi_type_RD=="All" & input$p_type_RD=="Constant") {
-          no_fits<- 2+no_covariate_available_RD()
-        }
-        
-        if (input$phi_type_RD=="All" & input$p_type_RD=="Covariates") {
-          no_fits<- (2+no_covariate_available_RD()) * (1+no_covariate_available_RD())
-        }
-        
-        if (input$phi_type_RD=="Constant" & input$p_type_RD=="All") {
-          no_fits<- 1+no_covariate_available_RD()
-        }
-        
-        if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant") {
-          no_fits<- 1
-        }
-        
-        if (input$phi_type_RD=="Constant" & input$p_type_RD=="Covariates") {
-          no_fits<- 1+no_covariate_available_RD()
-        }
-        
-        if (input$phi_type_RD=="Covariates" & input$p_type_RD=="All") {
-          no_fits<- (1+no_covariate_available_RD())*(1+no_covariate_available_RD())
-        }
-        
-        if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Constant") {
-          no_fits<- 1+no_covariate_available_RD()
-        }
-        
-        if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Covariates") {
-          no_fits<- (1+no_covariate_available_RD()) * (1+no_covariate_available_RD())
-        }
-        
-        if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="All") {
-          no_fits<- 2*(1+no_covariate_available_RD())
-        }
-        
-        if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant") {
-          no_fits<- 2
-        }
-        
-        if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Covariates") {
-          no_fits<- 2* (1+no_covariate_available_RD())
-        }
-        
-      } else {
-        
-        # input$cov_yn_RD == "No"
-        if (input$phi_type_RD=="All" & input$p_type_RD=="All") { no_fits<- 2 }
-        if (input$phi_type_RD=="Constant" & input$p_type_RD=="All") { no_fits<- 1 }
-        if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="All") { no_fits<- 2 }
-        if (input$phi_type_RD=="All" & input$p_type_RD=="Constant") { no_fits<- 2 }
-        if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant") { no_fits<- 1 }
-        if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant") { no_fits<- 2 }
-        
+    if (input$cov_yn_RD == "Yes") {
+     
+      if (input$phi_type_RD=="All" & input$p_type_RD=="All") {
+        no_fits<- (2+no_covariate_available_RD()) * (1+no_covariate_available_RD())
       }
+      
+      if (input$phi_type_RD=="All" & input$p_type_RD=="Constant") {
+        no_fits<- 2+no_covariate_available_RD()
+      }
+      
+      if (input$phi_type_RD=="All" & input$p_type_RD=="Covariates") {
+        no_fits<- (2+no_covariate_available_RD()) * (1+no_covariate_available_RD())
+      }
+      
+      if (input$phi_type_RD=="Constant" & input$p_type_RD=="All") {
+        no_fits<- 1+no_covariate_available_RD()
+      }
+      
+      if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant") {
+        no_fits<- 1
+      }
+      
+      if (input$phi_type_RD=="Constant" & input$p_type_RD=="Covariates") {
+        no_fits<- 1+no_covariate_available_RD()
+      }
+      
+      if (input$phi_type_RD=="Covariates" & input$p_type_RD=="All") {
+        no_fits<- (1+no_covariate_available_RD())*(1+no_covariate_available_RD())
+      }
+      
+      if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Constant") {
+        no_fits<- 1+no_covariate_available_RD()
+      }
+      
+      if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Covariates") {
+        no_fits<- (1+no_covariate_available_RD()) * (1+no_covariate_available_RD())
+      }
+      
+      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="All") {
+        no_fits<- 2*(1+no_covariate_available_RD())
+      }
+      
+      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant") {
+        no_fits<- 2
+      }
+      
+      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Covariates") {
+        no_fits<- 2* (1+no_covariate_available_RD())
+      }
+
+    } else {
+      
+      # input$cov_yn_RD == "No"
+      if (input$phi_type_RD=="All" & input$p_type_RD=="All") { no_fits<- 2 }
+      if (input$phi_type_RD=="Constant" & input$p_type_RD=="All") { no_fits<- 1 }
+      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="All") { no_fits<- 2 }
+      if (input$phi_type_RD=="All" & input$p_type_RD=="Constant") { no_fits<- 2 }
+      if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant") { no_fits<- 1 }
+      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant") { no_fits<- 2 }
+      
     }
-    
+  }
+
     
     if ( input_not_null == FALSE ) {
       no_fits<-1
-    }
+}
     
     
     # RD no_fits
@@ -1776,33 +1844,33 @@ shinyServer(function(input, output,session) {
   # define cov names vector
   
   #  zz_names<- reactive({
-  
+    
   # if (input$cov_yn_RD=="Yes") {
-  
+      
   #  data_all<- dataInput_RD()
   #  all_names_RD<- names(data_all)
   #  cov_names_RD<- all_names_RD[,input$cov_col_range_RD[1:2]]
-  
+    
   #  } else {NULL}
-  
+    
   #  return(cov_names_RD)
   # })
   
   
   output$out3_RD <- renderTable({
-    
+   
     
     #data_cov_names_RD()
     
-    return()
-    
+   return()
+   
   })
   
   
   
   # *** define cov (max is 1) considered in the model
   zz_RD<-reactive({
-    
+
     if (input$cov_yn_RD=="Yes") {
       
       data_all<- dataInput_RD()
@@ -1825,11 +1893,11 @@ shinyServer(function(input, output,session) {
         # first and second columns corresponds to phi and p respectively
         cov= array(NA, dim=c(T_RD(),2,total_no_fits_RD()) )
         
-        
-        # set up a covariate array with length total_no_fits() elements
-        # phi_cov= data_all[,input$cov_col_range_RD[1]]; phi_covariate=phi_cov-mean(phi_cov)
-        #  p_cov= data_all[,input$cov_col_range_RD[1]+1]; p_covariate=p_cov-mean(p_cov)
-        
+
+       # set up a covariate array with length total_no_fits() elements
+       # phi_cov= data_all[,input$cov_col_range_RD[1]]; phi_covariate=phi_cov-mean(phi_cov)
+      #  p_cov= data_all[,input$cov_col_range_RD[1]+1]; p_covariate=p_cov-mean(p_cov)
+       
         #*** update two covs for each of potential models
         
         if (input$phi_type_RD=="All" & input$p_type_RD=="All") {
@@ -1878,22 +1946,22 @@ shinyServer(function(input, output,session) {
             
             cov[,1,start_ind:end_ind][not_na_index]<- phi_cov_vec[not_na_index]- mean(phi_cov_vec[not_na_index])
             
-            
+
             ## define covariates for p
             ## from the no_covariate_available_RD()*(no_covariate_available_RD()+2)+3 model to the end
             # standarlise and update covariate array
             cov[,2,ii+no_covariate_available_RD()*(no_covariate_available_RD()+2)+2][not_na_index]<- 
               p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index])
-            
+
           }
           
           
-          
+        
           # the end of case input$phi_type_RD=="All" & input$p_type_RD=="All"
         }
         
         
-        
+          
       }
       
     } else {
@@ -1916,7 +1984,7 @@ shinyServer(function(input, output,session) {
   
   
   # **** run (kk)th RD model, kk_RD is an index ------
-  
+
   kk.RD.prediction<- function(kk_RD=1){
     
     # kk index is an parameter
@@ -2385,7 +2453,7 @@ shinyServer(function(input, output,session) {
     
     
     
-    
+ 
     
     #*** the (k)th RD model according to the no. of cov
     
@@ -2406,7 +2474,7 @@ shinyServer(function(input, output,session) {
           time_spent=numeric()
           
           # fit all possible combinations of RD models
-          
+         
           # phi(t), p(c) 
           
           #l.prob=0.001
@@ -2418,14 +2486,14 @@ shinyServer(function(input, output,session) {
           # try(optim(par=param,
           #            fn=RD.phit.pc.logl,
           #            method="BFGS",
-          #method="L-BFGS-B",lower = l.bound , upper = u.bound,
+                      #method="L-BFGS-B",lower = l.bound , upper = u.bound,
           #            hessian=TRUE,
           #            data=data1_RD,T=T_RD(),D=D_RD(),k=no_k(),missed=miss_occ_RD())),TRUE)}
           
           
           
           # input iteration number
-          n.rep= input$num_iteration_RD
+          n.rep= isolate(input$num_iteration_RD)
           
           # initial estiamte elements
           N0.test<-p.test<-loglike.test<-numeric()
@@ -2453,22 +2521,11 @@ shinyServer(function(input, output,session) {
           
           # Time spent
           t.spent.phit.pc<- as.numeric(names(table(t.record[1])))
-          
-          
-        }
-        
-        
-        if (input$phi_type_RD=="All" & input$p_type_RD=="Constant" ) {
+
           
         }
         
-        if (input$phi_type_RD=="All" & input$p_type_RD=="Covariates" ) {
-          
-        }
-        
-        if (input$phi_type_RD=="Constant" & input$p_type_RD=="All" ) {
-          
-        }
+       
         
         if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant" ) {
           
@@ -2478,9 +2535,6 @@ shinyServer(function(input, output,session) {
           
         }
         
-        if (input$phi_type_RD=="Covariates" & input$p_type_RD=="All" ) {
-          
-        }
         
         if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Constant" ) {
           
@@ -2490,9 +2544,6 @@ shinyServer(function(input, output,session) {
           
         }
         
-        if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="All" ) {
-          
-        }
         
         if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant" ) {
           
@@ -2505,21 +2556,21 @@ shinyServer(function(input, output,session) {
         
         
         
-      }
-      
+        }
+        
       # kk_results_RD
       
-    })
+      })
+      
     
-    
-    return(list(RD.phit.pc=fit.phit.pc,
-                time_spent=t.spent.phit.pc))
+return(list(RD.phit.pc=fit.phit.pc,
+            time_spent=t.spent.phit.pc))
     
   }
   
   
   
-  
+ 
   
   # fit all possible models
   
@@ -2541,7 +2592,7 @@ shinyServer(function(input, output,session) {
       data1_RD=data_all[,input$data_colnum_RD]
       
       
-      
+    
     }
     
     
@@ -2595,7 +2646,7 @@ shinyServer(function(input, output,session) {
   
   
   
-  
+   
   # old RD.prediction 
   RD.prediction <- reactive({
     
@@ -2603,160 +2654,160 @@ shinyServer(function(input, output,session) {
     # Reset when Reset button is clicked
     
     if (run_button_counts_RD$counts!=0) {
-      
-      input$run_ana_button
-      
-      
-      # input$data will be NULL initially
-      
-      data_all<- dataInput_RD()
-      data1_RD=data_all[,input$data_colnum_RD]
+    
+    input$run_ana_button
       
       
-      # read functions
+    # input$data will be NULL initially
       
-      RD.logl <- function (param,data, T, D, k,missed){
+    data_all<- dataInput_RD()
+    data1_RD=data_all[,input$data_colnum_RD]
+    
+    
+    # read functions
+    
+    RD.logl <- function (param,data, T, D, k,missed){
+      
+      data[missed]=0
+      
+      ######	 fixed total
+      sim.K=T  #  total no. of occasions
+      sim.k= k # as.integer(exp( param(1) ) )   # no. of secondary occasisons (param)
+      sim.T=sim.K/sim.k  # no. of primary occasions
+      
+      # param
+      phi12<-expit(param[1:((sim.T)-1)]); phi21 <- 1-phi12; pi<-c(mean(phi21),1-mean(phi21))
+      p <- expit(param[(sim.T)]); p<-rep(p,sim.K)
+      n01<-exp(param[(sim.T)+1]);N=n01+D
+      
+      
+      phi <-  list(matrix(rep(c(0,1),2), ncol=2,byrow=TRUE)); phi <- rep(phi,(sim.T)-1)
+      for (j in 1:((sim.T)-1)) {phi[[j]]<- matrix(c(1-phi12[j],phi12[j],phi21[j],1-phi21[j]), ncol=2,byrow=TRUE)}
+      
+      
+      # prob of being removed, primary periods in rows (1,), secondary in cols (1,1)
+      alpha<-matrix(NA,ncol=sim.K, nrow=sim.K)
+      
+      # prob of being in state 1 (observable) & not being removed
+      beta1<-matrix(NA,ncol=sim.K, nrow=sim.K)
+      
+      # prob of being in state 2 (unobservable) & not being removed
+      beta2<-matrix(NA,ncol=sim.K, nrow=sim.K)
+      
+      
+      # jj=1, ii=1
+      alpha[1,1]<- pi[1]*p[1]
+      beta1[1,1]<- (alpha[1,1]/p[1])*(1-p[1]) # state 1 & not being removed 
+      beta2[1,1]<- 1-(alpha[1,1]/p[1])                # state 2 & not being removed
+      
+      # jj=2:sim.k, ii=1
+      
+      for (jj in 2:sim.k){
         
-        data[missed]=0
-        
-        ######	 fixed total
-        sim.K=T  #  total no. of occasions
-        sim.k= k # as.integer(exp( param(1) ) )   # no. of secondary occasisons (param)
-        sim.T=sim.K/sim.k  # no. of primary occasions
-        
-        # param
-        phi12<-expit(param[1:((sim.T)-1)]); phi21 <- 1-phi12; pi<-c(mean(phi21),1-mean(phi21))
-        p <- expit(param[(sim.T)]); p<-rep(p,sim.K)
-        n01<-exp(param[(sim.T)+1]);N=n01+D
-        
-        
-        phi <-  list(matrix(rep(c(0,1),2), ncol=2,byrow=TRUE)); phi <- rep(phi,(sim.T)-1)
-        for (j in 1:((sim.T)-1)) {phi[[j]]<- matrix(c(1-phi12[j],phi12[j],phi21[j],1-phi21[j]), ncol=2,byrow=TRUE)}
-        
-        
-        # prob of being removed, primary periods in rows (1,), secondary in cols (1,1)
-        alpha<-matrix(NA,ncol=sim.K, nrow=sim.K)
-        
-        # prob of being in state 1 (observable) & not being removed
-        beta1<-matrix(NA,ncol=sim.K, nrow=sim.K)
-        
-        # prob of being in state 2 (unobservable) & not being removed
-        beta2<-matrix(NA,ncol=sim.K, nrow=sim.K)
-        
-        
-        # jj=1, ii=1
-        alpha[1,1]<- pi[1]*p[1]
-        beta1[1,1]<- (alpha[1,1]/p[1])*(1-p[1]) # state 1 & not being removed 
-        beta2[1,1]<- 1-(alpha[1,1]/p[1])                # state 2 & not being removed
-        
-        # jj=2:sim.k, ii=1
-        
-        for (jj in 2:sim.k){
-          
-          alpha[1,jj]<- (alpha[1,jj-1]/p[jj-1]*(1-p[jj-1])*p[jj])
-          beta1[1,jj]<- (beta1[1,jj-1]*(1-p[jj]))
-          beta2[1,jj]<- (beta2[1,jj-1])
-        }
-        
-        
-        #   #   #   #   #   #   #   #   #   from 2nd primary period
-        for (ii in 2:sim.T) {
-          
-          phi11=phi[[ii-1]][1,1]; phi12=phi[[ii-1]][1,2];
-          phi21=phi[[ii-1]][2,1]; phi22=phi[[ii-1]][2,2];       
-          
-          for (jj in 1:sim.k) {
-            
-            if (jj==1) {
-              alpha[ii,1]<- (beta1[ii-1,sim.k]*phi11 + beta2[ii-1,sim.k]*phi21)*p[ii]
-              beta1[ii,1]<- (alpha[ii,1]/p[ii])*(1-p[ii])  # state 1 & not being removed 
-              beta2[ii,1]<-  beta1[ii-1,sim.k]*phi12 + beta2[ii-1,sim.k]*phi22    # state 2 & not being removed
-            }
-            else {
-              alpha[ii,jj]<- (alpha[ii,jj-1]/p[jj-1]*(1-p[jj-1])*p[jj])
-              beta1[ii,jj]<- beta1[ii,jj-1]*(1-p[ii])
-              beta2[ii,jj]<- beta2[ii,jj-1]
-            }
-            
-          }
-        }
-        
-        L0=1-sum(alpha[1:sim.T,1:sim.k])
-        
-        L=numeric()
-        
-        o=1
-        for (ii in 1:sim.T) {
-          
-          for (jj in 1:sim.k) {
-            
-            L[o]=alpha[ii,jj]
-            o=o+1
-          }}
-        
-        L=L[1:sim.K]  
-        
-        L[which(L==0)]<-10^(-10)
-        L[missed]<-10^(-10)
-        
-        logL=lgamma(N+1)-sum(lgamma(data[-missed]+1))-lgamma(n01+1)+sum(data*log(L)) + n01*log(L0)
-        
-        return(-logL)
+        alpha[1,jj]<- (alpha[1,jj-1]/p[jj-1]*(1-p[jj-1])*p[jj])
+        beta1[1,jj]<- (beta1[1,jj-1]*(1-p[jj]))
+        beta2[1,jj]<- (beta2[1,jj-1])
       }
       
       
-      ## *** add iter_num
+      #   #   #   #   #   #   #   #   #   from 2nd primary period
+      for (ii in 2:sim.T) {
+        
+        phi11=phi[[ii-1]][1,1]; phi12=phi[[ii-1]][1,2];
+        phi21=phi[[ii-1]][2,1]; phi22=phi[[ii-1]][2,2];       
+        
+        for (jj in 1:sim.k) {
+          
+          if (jj==1) {
+            alpha[ii,1]<- (beta1[ii-1,sim.k]*phi11 + beta2[ii-1,sim.k]*phi21)*p[ii]
+            beta1[ii,1]<- (alpha[ii,1]/p[ii])*(1-p[ii])  # state 1 & not being removed 
+            beta2[ii,1]<-  beta1[ii-1,sim.k]*phi12 + beta2[ii-1,sim.k]*phi22    # state 2 & not being removed
+          }
+          else {
+            alpha[ii,jj]<- (alpha[ii,jj-1]/p[jj-1]*(1-p[jj-1])*p[jj])
+            beta1[ii,jj]<- beta1[ii,jj-1]*(1-p[ii])
+            beta2[ii,jj]<- beta2[ii,jj-1]
+          }
+          
+        }
+      }
       
+      L0=1-sum(alpha[1:sim.T,1:sim.k])
       
-      l.prob=0.001
-      u.prob=0.999
-      l.bound<- c(rep(logit(l.prob),(T_RD()/no_k()) ),log(0.0001))
-      u.bound<- c(rep(logit(u.prob),(T_RD()/no_k()) ),log(10000))
+      L=numeric()
       
-      # initial starting param
-      param=c(logit(runif((T_RD()/2-1),0.1,0.9)), #phi12
-              logit(runif(1,0.1,0.9)),# p
-              log(runif(1,10,100)) ) #N
+      o=1
+      for (ii in 1:sim.T) {
+        
+        for (jj in 1:sim.k) {
+          
+          L[o]=alpha[ii,jj]
+          o=o+1
+        }}
       
+      L=L[1:sim.K]  
       
-      # testv=RD.logl(param=param,data=data1_RD,T=T_RD(),D=D_RD(),k=no_k(),missed=miss_occ_RD())
+      L[which(L==0)]<-10^(-10)
+      L[missed]<-10^(-10)
       
-      # RD.logl(param=param,data=sim_data,T=length(sim_data),D=sum(sim_data),k=2,
-      #           missed=which(is.na(sim_data)) )
+      logL=lgamma(N+1)-sum(lgamma(data[-missed]+1))-lgamma(n01+1)+sum(data*log(L)) + n01*log(L0)
       
-      #optim(par=param,
-      #      fn=RD.logl,
-      #      #method="BFGS",
-      #      method="L-BFGS-B",lower = l.bound , upper = u.bound,
-      #      hessian=TRUE,
-      #      data=sim_data,T=length(sim_data),D=sum(sim_data),k=2,
-      #     missed=which(is.na(sim_data)) )
-      
-      
-      
-      # *** Start the clock for optimisation =-=-=-=-
-      ptm <- proc.time()
-      
-      fit.RD<-optim(par=param,
-                    fn=RD.logl,
-                    method="BFGS",
-                    #method="L-BFGS-B",lower = l.bound , upper = u.bound,
-                    hessian=TRUE,
-                    data=data1_RD,T=T_RD(),D=D_RD(),k=no_k(),missed=miss_occ_RD())
-      
-      # *** Stop the clock =-=-=-=-
-      t.record<-proc.time() - ptm
-      
-      # *** Time spent
-      t_spent<- as.numeric(names(table(t.record[1])))
-      
-      
+      return(-logL)
+    }
+ 
+    
+       ## *** add iter_num
+    
+    
+    l.prob=0.001
+    u.prob=0.999
+    l.bound<- c(rep(logit(l.prob),(T_RD()/no_k()) ),log(0.0001))
+    u.bound<- c(rep(logit(u.prob),(T_RD()/no_k()) ),log(10000))
+    
+    # initial starting param
+    param=c(logit(runif((T_RD()/2-1),0.1,0.9)), #phi12
+            logit(runif(1,0.1,0.9)),# p
+            log(runif(1,10,100)) ) #N
+    
+   
+    # testv=RD.logl(param=param,data=data1_RD,T=T_RD(),D=D_RD(),k=no_k(),missed=miss_occ_RD())
+    
+    # RD.logl(param=param,data=sim_data,T=length(sim_data),D=sum(sim_data),k=2,
+    #           missed=which(is.na(sim_data)) )
+    
+    #optim(par=param,
+    #      fn=RD.logl,
+    #      #method="BFGS",
+    #      method="L-BFGS-B",lower = l.bound , upper = u.bound,
+    #      hessian=TRUE,
+    #      data=sim_data,T=length(sim_data),D=sum(sim_data),k=2,
+    #     missed=which(is.na(sim_data)) )
+    
+    
+    
+    # *** Start the clock for optimisation =-=-=-=-
+    ptm <- proc.time()
+    
+    fit.RD<-optim(par=param,
+                  fn=RD.logl,
+                  method="BFGS",
+                  #method="L-BFGS-B",lower = l.bound , upper = u.bound,
+                  hessian=TRUE,
+                  data=data1_RD,T=T_RD(),D=D_RD(),k=no_k(),missed=miss_occ_RD())
+    
+    # *** Stop the clock =-=-=-=-
+    t.record<-proc.time() - ptm
+    
+    # *** Time spent
+    t_spent<- as.numeric(names(table(t.record[1])))
+    
+    
     } else {
       
       fit.RD=NULL
       fitted=NULL
       t_spent=NULL
-    }
+  }
     
     return(list(fitted=fit.RD,
                 t_spent=t_spent))
@@ -2764,10 +2815,10 @@ shinyServer(function(input, output,session) {
   })
   
   
+
   
   
-  
-  
+    
   ################################  estimates from RD
   
   ept.phi12.RD<- reactive({ 
@@ -2937,12 +2988,12 @@ shinyServer(function(input, output,session) {
   
   # read the number of times hitted run analysis button
   
-  #tags$script("$(document).on('click', '#reset_ana_button', 
-  #            function () {
-  #              Shiny.onInputChange('run_ana_button',0);
-  #             }
-  #            );"
-  #            )
+ #tags$script("$(document).on('click', '#reset_ana_button', 
+#            function () {
+#              Shiny.onInputChange('run_ana_button',0);
+#             }
+#            );"
+#            )
   
   # set new reactive values of the number of hits of actionButton
   #  as impossible to reset value of an actionButton == 0
@@ -2952,21 +3003,21 @@ shinyServer(function(input, output,session) {
   # Each time (run) button is clicked, add 1 to reactive value of run_button_counts$counts
   observeEvent(input$run_ana_button,
                {run_button_counts$counts =  isolate(run_button_counts$counts) +1 }
-  )
+               )
   
   observeEvent(input$reset_ana_button,
                {run_button_counts$counts = 0}
-  )
-  # run_button_counts<-reactive({isolate(input$run_ana_button)
-  #    })
+               )
+ # run_button_counts<-reactive({isolate(input$run_ana_button)
+ #    })
   
-  # default_plot <- eventReactive(input$reset_ana_button, {
-  #    head(cars)
-  # })
+ # default_plot <- eventReactive(input$reset_ana_button, {
+#    head(cars)
+ # })
   
   # reset_run_button_counts<-observeEvent(input$reset_ana_button,
   #                                      isolate(run_ana_button)=0)
-  
+
   
   #############################
   
@@ -2974,70 +3025,70 @@ shinyServer(function(input, output,session) {
     
     no_cov<-no_covariate_available()
     
-    if (input$cov_yn=="Yes" && no_cov>1){
-      
-      ## when there are more than 1 covaraiete available
-      
-      # pcov name vector 
-      one_cov_vec<- paste0("p(cov",1:no_cov,")") # when one cov is considered 
-      
-      # read index vectors
-      first_cov_index<-two_cov_combin_index_vec()$orignal_index_vec[,1]
-      second_cov_index<-two_cov_combin_index_vec()$orignal_index_vec[,2]
-      
-      two_cov_vec_plus<- paste0("p(cov",first_cov_index,
-                                "+cov",second_cov_index,")"
-      )
-      
-      two_cov_vec_plus_times<- paste0("p(cov",first_cov_index,
-                                      "+cov",second_cov_index,
-                                      "+cov",first_cov_index,
-                                      "*cov",second_cov_index,")"
-      )
-      
-      two_cov_vec<-character(total_no_fits()$no_two_cov_cases)
-      for (i in 1:(length(two_cov_vec)/2)) {
-        two_cov_vec[i*2-1]<-two_cov_vec_plus[i]
-        two_cov_vec[i*2]<-two_cov_vec_plus_times[i]
-      }
-      
-      # model_name_vec
-      model_name_vec<-c(paste("p(c)"),
-                        one_cov_vec,
-                        two_cov_vec)
-      
-      
-      # p_cov_used_vec when more than one covs are considered
-      
-      # initialise two_cov_names_vec
-      two_cov_names_vec<- character()
-      
-      for (ii in 1:choose(no_covariate_available(),2)) {
+     if (input$cov_yn=="Yes" && no_cov>1){
         
-        cov1_name<-data_cov_names()[two_cov_combin_index_vec()$orignal_index_vec[ii,1]]
-        cov2_name<- data_cov_names()[two_cov_combin_index_vec()$orignal_index_vec[ii,2]]
+        ## when there are more than 1 covaraiete available
         
-        two_cov_names_vec[ii*2-1] <- paste0("  ",cov1_name, " & ",cov2_name)
-        two_cov_names_vec[ii*2] <- paste0("  ",cov1_name," & ",cov2_name)
-      }
-      
-      
-      p_cov_used_vec<-c(paste("  -"),
-                        paste0("  ",data_cov_names()),
-                        two_cov_names_vec)
-      
-    } 
+        # pcov name vector 
+        one_cov_vec<- paste0("p(cov",1:no_cov,")") # when one cov is considered 
+        
+        # read index vectors
+        first_cov_index<-two_cov_combin_index_vec()$orignal_index_vec[,1]
+        second_cov_index<-two_cov_combin_index_vec()$orignal_index_vec[,2]
+        
+        two_cov_vec_plus<- paste0("p(cov",first_cov_index,
+                                  "+cov",second_cov_index,")"
+                                  )
+        
+        two_cov_vec_plus_times<- paste0("p(cov",first_cov_index,
+                                        "+cov",second_cov_index,
+                                        "+cov",first_cov_index,
+                                        "*cov",second_cov_index,")"
+                                        )
+        
+        two_cov_vec<-character(total_no_fits()$no_two_cov_cases)
+        for (i in 1:(length(two_cov_vec)/2)) {
+          two_cov_vec[i*2-1]<-two_cov_vec_plus[i]
+          two_cov_vec[i*2]<-two_cov_vec_plus_times[i]
+        }
+        
+        # model_name_vec
+        model_name_vec<-c(paste("p(c)"),
+                          one_cov_vec,
+                          two_cov_vec)
+        
+        
+        # p_cov_used_vec when more than one covs are considered
+  
+        # initialise two_cov_names_vec
+        two_cov_names_vec<- character()
+        
+        for (ii in 1:choose(no_covariate_available(),2)) {
+          
+          cov1_name<-data_cov_names()[two_cov_combin_index_vec()$orignal_index_vec[ii,1]]
+          cov2_name<- data_cov_names()[two_cov_combin_index_vec()$orignal_index_vec[ii,2]]
+          
+          two_cov_names_vec[ii*2-1] <- paste0("  ",cov1_name, " & ",cov2_name)
+          two_cov_names_vec[ii*2] <- paste0("  ",cov1_name," & ",cov2_name)
+        }
+        
+        
+        p_cov_used_vec<-c(paste("  -"),
+                          paste0("  ",data_cov_names()),
+                          two_cov_names_vec)
+        
+     } 
     
     if (input$cov_yn=="Yes" && no_cov==1){
-      
-      # pcov vector when one cov is considered 
-      model_name_vec<- paste0("p(c)"," p(cov",1:no_cov,")")
-      
-      # p_cov_used_vec
-      p_cov_used_vec<-c(paste("-"), 
-                        paste("cov"))
-      
-    }  
+        
+        # pcov vector when one cov is considered 
+        model_name_vec<- paste0("p(c)"," p(cov",1:no_cov,")")
+        
+        # p_cov_used_vec
+        p_cov_used_vec<-c(paste("-"), 
+                          paste("cov"))
+        
+      }  
     
     if (input$cov_yn=="No"){
       
@@ -3055,7 +3106,7 @@ shinyServer(function(input, output,session) {
     all_model_tab<-data.frame(Num= Num,
                               Model=model_name_vec,
                               p_cov_used=p_cov_used_vec
-    )
+                              )
     
     return(list(all_model_tab=all_model_tab,
                 Num=Num,
@@ -3069,13 +3120,14 @@ shinyServer(function(input, output,session) {
   
   
   # all_model_table in the Settings section.
-  output$all_model_table<-renderFlexTable({
+  output$all_model_table<-renderTable({
     
     print_all_list_model_tab<-all_list_model_tab()$all_model_tab
-    print_all_list_model_tab<-vanilla.table(print_all_list_model_tab)
     
-    print_all_list_model_tab[, c("Num","Model"), to ="header"] <- parLeft() # left text
-    print_all_list_model_tab[, c("Num","Model")] <- parLeft() # left align header
+    #print_all_list_model_tab<-vanilla.table(print_all_list_model_tab)
+    
+    #print_all_list_model_tab[, c("Num","Model"), to ="header"] <- parLeft() # left text
+    #print_all_list_model_tab[, c("Num","Model")] <- parLeft() # left align header
     
     return(print_all_list_model_tab)
   })
@@ -3105,7 +3157,7 @@ shinyServer(function(input, output,session) {
       
       #
       
-      # time_spent<-time_all_ana_model_table()
+     # time_spent<-time_all_ana_model_table()
       
       time_spent<- numeric()
       time_spent[1]<-all.geo.prediction()$pc.prediction$time_spent
@@ -3151,7 +3203,7 @@ shinyServer(function(input, output,session) {
       #num_max<- numeric()
       #num_max[1]<- all.geo.prediction()$pt.2cov.prediction[[2]]$num.max.location.2cov.times
       #num_max<- rep(num_max,length(all_list_model_tab()$Num))
-      
+        
       
       # chechinput to print out the max_logls 
       # rep("", 6)
@@ -3164,8 +3216,9 @@ shinyServer(function(input, output,session) {
                                              Model=model_name_vec_RD,
                                              p_cov_used=p_cov_used,
                                              time_spent=time_spent,
-                                             num_max= num_max,
-                                             print_logLs=print_logLs)
+                                             num_max= num_max
+                                             #print_logLs=print_logLs
+                                             )
       
     } else {
       
@@ -3186,7 +3239,7 @@ shinyServer(function(input, output,session) {
       
       
       # time_spent vector, two cov case
-      time_spent<-rep(c(""),total_no_fits()$no_fits)
+       time_spent<-rep(c(""),total_no_fits()$no_fits)
       
       #time_spent<-numeric()
       #time_spent[1]<- hh.geo.pc.prediction(hh=1)$time_spent
@@ -3199,7 +3252,7 @@ shinyServer(function(input, output,session) {
       
       num_max<- rep(c(""),total_no_fits()$no_fits)
       
-      
+     
       # chechinput to print out the max_logls 
       
       print_logLs<-rep(c(""),total_no_fits()$no_fits)
@@ -3210,12 +3263,13 @@ shinyServer(function(input, output,session) {
                                              Model=model_name_vec_RD,
                                              p_cov_used=p_cov_used,
                                              time_spent=time_spent,
-                                             num_max= num_max,
-                                             print_logLs=print_logLs)
+                                             num_max= num_max
+                                             #print_logLs=print_logLs
+                                             )
       
     }
-    
-    
+
+   
     # returns one table element
     return(draft_all_model_ana_tab_RD)
     
@@ -3224,7 +3278,7 @@ shinyServer(function(input, output,session) {
   
   
   
-  output$all_ana_model_table<-renderFlexTable({
+  output$all_ana_model_table<-renderTable({
     
     # Create checkboxes
     #all_ana_model_table_RD()$all_ana_model_table_RD$print_max_logLs <- 
@@ -3246,18 +3300,18 @@ shinyServer(function(input, output,session) {
     
     null_values<-flex_tab$print_logLs
     
-    flex_tab$print_logLs<-  paste0('<label><input type="checkbox" id="flex_Num', 
-                                   1:total_no_fits()$no_fits, '"> <span>', # 1:total_no_models()
-                                   null_values, '</span></label>')
+    #flex_tab$print_logLs<-  paste0('<label><input type="checkbox" id="flex_Num', 
+    #                               1:total_no_fits()$no_fits, '"> <span>', # 1:total_no_models()
+    #                               null_values, '</span></label>')
     
     # convert to FlexTable objet
-    flex_table<- vanilla.table(flex_tab)
+    #flex_table<- vanilla.table(flex_tab)
     
-    flex_table[, c("Num","Model"), to = "header"] <- parLeft() # left align the column "Num"
-    flex_table[, c("Num","Model")] <- parLeft() # left align header
+    #flex_table[, c("Num","Model"), to = "header"] <- parLeft() # left align the column "Num"
+    #flex_table[, c("Num","Model")] <- parLeft() # left align header
+
     
-    
-    return(flex_table)
+    return(flex_tab)
   })
   
   
@@ -3306,14 +3360,14 @@ shinyServer(function(input, output,session) {
           print(all.geo.prediction()$pt.2cov.prediction[[index]]$mle.test.2cov.times$loglike)
           
           
-        } else {
+          } else {
           
-          # odd number
-          
-          index<-(res-(1+total_no_fits()$no_one_cov_cases)+1)/2
-          
-          print(all.geo.prediction()$pt.2cov.prediction[[index]]$mle.test.2cov$loglike)
-          
+            # odd number
+            
+            index<-(res-(1+total_no_fits()$no_one_cov_cases)+1)/2
+            
+            print(all.geo.prediction()$pt.2cov.prediction[[index]]$mle.test.2cov$loglike)
+            
         }
         
       }
@@ -3323,7 +3377,7 @@ shinyServer(function(input, output,session) {
       print(flex_Num[res])
       
     }
-    
+  
     
   })
   
@@ -3346,14 +3400,14 @@ shinyServer(function(input, output,session) {
   ################################3
   # show predicted data plot
   output$plot <- renderPlot({
-    
+
     # plot if hit run button 
     
     if (run_button_counts$counts!=0) {
-      
-      # isolate this to avoid reactive plot function
-      data_plot<- isolate(download_plot())
-      
+    
+    # isolate this to avoid reactive plot function
+    data_plot<- isolate(download_plot())
+    
     } else {data_plot<- NULL}
     
     #predicted.num<-ept.num.geo()
@@ -3363,9 +3417,10 @@ shinyServer(function(input, output,session) {
     
   })
   
+  
+  
   # download plot
-  
-  
+
   output$downloadPlot <- downloadHandler(
     
     filename <- function() {
@@ -3434,8 +3489,8 @@ shinyServer(function(input, output,session) {
     } else {
       output<-geo.model.tab()
       
-    }
-    
+      }
+ 
     return(output)
   }) 
   
@@ -3445,7 +3500,16 @@ shinyServer(function(input, output,session) {
     data_all<- dataInput()
     data1=data_all[,input$data_colnum]
     
-    return(geo.model.tab())
+    estimates.tab.results<-data.frame(
+      Model = geo.aic.models()$model.names.ordered,
+      p_cov_used = geo.aic.models()$p_cov_used_ordered,
+      No_param=geo.aic.models()$geo.pt.no.param.ordered,
+      max_logL=geo.aic.models()$geo.pt.maxlogl.ordered,
+      AIC=geo.aic.models()$aic.ordered,
+      delta.AIC= geo.aic.models()$delta.aic.ordered
+    )
+    
+    return()
   })  
   
   
@@ -3468,7 +3532,7 @@ shinyServer(function(input, output,session) {
   }) 
   
   ################################ data summary
-  
+
   
   data_summary_tab<- reactive({
     
@@ -3531,7 +3595,7 @@ shinyServer(function(input, output,session) {
     #test.list[[2]]<-all.geo.prediction()$pt.2cov.prediction[[2]]
     
     
-    return(all.geo.prediction()$pt.2cov.prediction[[2]]$mle.test.2cov$loglike )
+    return( )
   })
   
   
@@ -3549,7 +3613,7 @@ shinyServer(function(input, output,session) {
     data_all<- dataInput_RD()
     DT::datatable(data_all)
   })  
-  
+ 
   # Output: RD data summary
   
   data_summary_tab_RD<- reactive({
@@ -3585,278 +3649,220 @@ shinyServer(function(input, output,session) {
   }) 
   
   
-  
+
   ## all_list_model_tab_RD() function
   all_list_model_tab_RD<-reactive({
+  
+  input_not_null <- isTRUE(input$p_type_RD!="" & input$phi_type_RD!="")
+  
+  if ( input_not_null == TRUE ) {
     
-    input_not_null <- isTRUE(input$p_type_RD!="" & input$phi_type_RD!="")
+    #model_name_vec_RD
     
-    if ( input_not_null == TRUE ) {
+    if (no_covariate_available_RD()>0) {
       
-      #model_name_vec_RD
+    no_cov<-no_covariate_available_RD()
+
+    # phic + pcov vector
+    phic_pcov_vec<- paste0("phi(c), p(cov",1:no_cov,")")
       
-      if (no_covariate_available_RD()>0) {
-        
-        no_cov<-no_covariate_available_RD()
-        
-        # phic + pcov vector
-        phic_pcov_vec<- paste0("phi(c), p(cov",1:no_cov,")")
-        
-        # phicov + pc + pcov vector
-        
-        # phicov + pc
-        phicov_pc0<- paste0("phi(cov",1:no_cov,")")
-        phicov_pc<- paste0(phicov_pc0,", p(c)")
-        
-        #phicov + pcov
-        pcov_vec<- paste0(", p(cov",1:no_cov,")")
-        
-        phicov_pcov<- c()
-        
-        for (i in 1:no_cov) {
-          phicov_pcov<- c(phicov_pcov,paste0(phicov_pc0[i], pcov_vec))
-        }
-        
-        # *** change phicov + pc case order
-        phicov_pc_pcov<-c(phicov_pc,phicov_pcov)
-        
-        
-        # phit + pcov
-        phit_pcov<- paste("phi(t)", pcov_vec)
-        
-        
-        # model_name_vec_RD
-        model_name_vec_RD<-c(paste("phi(c), p(c)"),
-                             phic_pcov_vec,
-                             phicov_pc_pcov,
-                             paste("phi(t), p(c)"),
-                             phit_pcov
-        )
-        
-        
-        
-        ####### ** covariate names vectors
-        
-        #** phi_cov_used_vec_RD according to covariate names
-        
-        # (phicov) + pcov
-        phicov_pcov_phiname <- character()
-        for (ii in 1:no_cov) {
-          phicov_pcov_phiname[(ii*no_cov-(no_cov-1)):(ii*no_cov)] <- data_cov_names_RD()[ii]
-          
-        }
-        
-        # final phi_cov_used_vec_RD
-        phi_cov_used_vec_RD<-c(paste("-"),
-                               rep(paste("-"),no_cov), # (phic) + pcov
-                               data_cov_names_RD(), # (phicov) + pc
-                               phicov_pcov_phiname, # (phicov) + pcov
-                               paste("-"),  # (phit) + pc
-                               rep(paste("-"),no_cov) # (phit) + pcov
-        )
-        
-        
-        
-        #** p_cov_used_vec_RD according to covariate names
-        
-        p_cov_used_vec_RD<-c(paste("-"),
-                             data_cov_names_RD(), # phic + (pcov)
-                             rep(paste("-"),no_cov), # phicov + (pc)
-                             rep(data_cov_names_RD(),no_cov), # phicov + (pcov)
-                             paste("-"), # phit + (pc)
-                             data_cov_names_RD() # phit + (pcov)
-        )
-        
-      } else {
-        
-        # no cov 
-        
-        # model_name_vec_RD
-        model_name_vec_RD<-c(paste("phi(c), p(c)"),
-                             paste("phi(t), p(c)")
-        )
-        
-        # phi_cov_used_vec_RD
-        phi_cov_used_vec_RD<-c(paste("-"),
-                               paste("-")  # (phit) + pc
-        )
-        
-        # p_cov_used_vec_RD
-        p_cov_used_vec_RD<-c(paste("-"),
-                             paste("-") # phit + (pc)
-        )
-      }
-      
-      
-      
-      
-      
-      if (input$phi_type_RD=="All" & input$p_type_RD=="All" ) {
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD),
-                                     Model=model_name_vec_RD,
-                                     phi_cov_used=phi_cov_used_vec_RD, # p cov if length(cov)=1
-                                     p_cov_used=p_cov_used_vec_RD # phi cov
-        )
-        
-        
-      } 
-      
-      if (input$phi_type_RD=="All" & input$p_type_RD=="Constant" ) {
-        
-        
-        model_name_vec_RD
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1,3,5)]),
-                                     Model=c(model_name_vec_RD[c(1,3,5)]),
-                                     phi_cov_used=p_cov_used_vec_RD[c(1,3,5)], # ***p cov if length(cov)=1
-                                     p_cov_used=p_cov_used_vec_RD[c(1,3,5)] #*** phi cov
-        )
-        
-        
-      }
-      
-      if (input$phi_type_RD=="All" & input$p_type_RD=="Covariates" ) {
-        
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD),
-                                     Model=c(model_name_vec_RD),
-                                     phi_cov_used=p_cov_used_vec_RD, # p cov if length(cov)=1
-                                     p_cov_used=p_cov_used_vec_RD # phi cov
-        )
-        
-        
-      }
-      
-      if (input$phi_type_RD=="Constant" & input$p_type_RD=="All" ) {
-        
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[1:4]),
-                                     Model=c(model_name_vec_RD[1:4]),
-                                     phi_cov_used=p_cov_used_vec_RD[1:4], # p cov if length(cov)=1
-                                     p_cov_used=p_cov_used_vec_RD[1:4] # phi cov
-        )
-        
-        
-      }
-      
-      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="All" ) {
-        
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:2,5:6)]),
-                                     Model=c(model_name_vec_RD[c(1:2,5:6)]),
-                                     phi_cov_used=p_cov_used_vec_RD[c(1:2,5:6)], # p cov if length(cov)=1
-                                     p_cov_used=p_cov_used_vec_RD[c(1:2,5:6)] # phi cov
-        )
-        
-        
-      }
-      
-      if (input$phi_type_RD=="Covariates" & input$p_type_RD=="All" ) {
-        
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:2)]),
-                                     Model=c(model_name_vec_RD[1:2]),
-                                     phi_cov_used=p_cov_used_vec_RD[1:2], # p cov if length(cov)=1
-                                     p_cov_used=p_cov_used_vec_RD[1:2] # phi cov
-        )
-        
-        
-      }
-      
-      
-      if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant") {
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[1]),
-                                     Model=model_name_vec_RD[1],
-                                     phi_cov_used=p_cov_used_vec_RD[1], # p cov if length(cov)=1
-                                     p_cov_used=p_cov_used_vec_RD[1] # phi cov
-        )
-      }
-      
-      if (input$phi_type_RD=="Constant" & input$p_type_RD=="Covariates") {
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:2)]),
-                                     Model=model_name_vec_RD[1:2],
-                                     phi_cov_used=p_cov_used_vec_RD[1:2], # p cov if length(cov)=1
-                                     p_cov_used=p_cov_used_vec_RD[1:2] # phi cov
-        )
-      }
-      
-      if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Constant") {
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1,3)]),
-                                     Model=c(model_name_vec_RD[1],model_name_vec_RD[3]),
-                                     phi_cov_used=c(model_name_vec_RD[1],p_cov_used_vec_RD[3]), # p cov if length(cov)=1
-                                     p_cov_used=c(p_cov_used_vec_RD[1] ,p_cov_used_vec_RD[3]) # phi cov
-        )
-        
-      }
-      
-      if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Covariates") {
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:4)]),
-                                     Model=c(model_name_vec_RD[1:4]),
-                                     phi_cov_used=c(model_name_vec_RD[1:4]), # p cov if length(cov)=1
-                                     p_cov_used=c(p_cov_used_vec_RD[1:4]) # phi cov
-        )
-        
-      }
-      
-      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant") {
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1,5)]),
-                                     Model=c(model_name_vec_RD[1],model_name_vec_RD[5]),
-                                     phi_cov_used=c(model_name_vec_RD[1],model_name_vec_RD[5]), # p cov if length(cov)=1
-                                     p_cov_used=c(p_cov_used_vec_RD[1],p_cov_used_vec_RD[5]) # phi cov
-        )
-        
-      }
-      
-      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Covariates") {
-        
-        
-        all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:2)]),
-                                     Model=c(model_name_vec_RD[1:2],model_name_vec_RD[5:6]),
-                                     phi_cov_used=c(model_name_vec_RD[1:2],model_name_vec_RD[5:6]), # p cov if length(cov)=1
-                                     p_cov_used=c(p_cov_used_vec_RD[1:2],p_cov_used_vec_RD[5:6]) # phi cov
-        )
-        
-      }
-    } else { all_model_tab_RD<- data.frame(Num= "",
-                                           Model= "",
-                                           phi_cov_used= "", # p cov if length(cov)=1
-                                           p_cov_used="" # phi cov
-    ) }
+    # phicov + pc + pcov vector
     
-    return(all_model_tab_RD)
+      # phicov + pc
+    phicov_pc0<- paste0("phi(cov",1:no_cov,")")
+    phicov_pc<- paste0(phicov_pc0,", p(c)")
+    
+      #phicov + pcov
+    pcov_vec<- paste0(", p(cov",1:no_cov,")")
+
+    phicov_pcov<- c()
+    
+    for (i in 1:no_cov) {
+      phicov_pcov<- c(phicov_pcov,paste0(phicov_pc0[i], pcov_vec))
+    }
+
+    # *** change phicov + pc case order
+    phicov_pc_pcov<-c(phicov_pc,phicov_pcov)
+    
+    
+    # phit + pcov
+    phit_pcov<- paste("phi(t)", pcov_vec)
+    
+      
+    # model_name_vec_RD
+    model_name_vec_RD<-c(paste("phi(c), p(c)"),
+                         phic_pcov_vec,
+                         phicov_pc_pcov,
+                         paste("phi(t), p(c)"),
+                         phit_pcov
+    )
+    
+    
+    
+    ####### ** covariate names vectors
+    
+    #** phi_cov_used_vec_RD according to covariate names
+    
+    # (phicov) + pcov
+    phicov_pcov_phiname <- character()
+    for (ii in 1:no_cov) {
+      phicov_pcov_phiname[(ii*no_cov-(no_cov-1)):(ii*no_cov)] <- data_cov_names_RD()[ii]
+      
+    }
+    
+    # final phi_cov_used_vec_RD
+    phi_cov_used_vec_RD<-c(paste("-"),
+                           rep(paste("-"),no_cov), # (phic) + pcov
+                           data_cov_names_RD(), # (phicov) + pc
+                           phicov_pcov_phiname, # (phicov) + pcov
+                           paste("-"),  # (phit) + pc
+                           rep(paste("-"),no_cov) # (phit) + pcov
+    )
+    
+    
+    
+    #** p_cov_used_vec_RD according to covariate names
+    
+    p_cov_used_vec_RD<-c(paste("-"),
+                         data_cov_names_RD(), # phic + (pcov)
+                         rep(paste("-"),no_cov), # phicov + (pc)
+                         rep(data_cov_names_RD(),no_cov), # phicov + (pcov)
+                         paste("-"), # phit + (pc)
+                         data_cov_names_RD() # phit + (pcov)
+                         )
+    
+    } else {
+      
+      # no cov 
+      
+      # model_name_vec_RD
+      model_name_vec_RD<-c(paste("phi(c), p(c)"),
+                           paste("phi(t), p(c)")
+      )
+      
+      # phi_cov_used_vec_RD
+      phi_cov_used_vec_RD<-c(paste("-"),
+                             paste("-")  # (phit) + pc
+      )
+      
+      # p_cov_used_vec_RD
+      p_cov_used_vec_RD<-c(paste("-"),
+                           paste("-") # phit + (pc)
+      )
+    }
+    
+    
+    
+    
+    
+    if (input$phi_type_RD=="All" & input$p_type_RD=="All" ) {
+      
+      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD),
+                                   Model=model_name_vec_RD,
+                                   phi_cov_used=phi_cov_used_vec_RD, # p cov if length(cov)=1
+                                   p_cov_used=p_cov_used_vec_RD # phi cov
+      )
+      
+      
+    } 
+    
+    #
+    if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant") {
+      
+      
+      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[1]),
+                                   Model=model_name_vec_RD[1],
+                                   phi_cov_used=p_cov_used_vec_RD[1], # p cov if length(cov)=1
+                                   p_cov_used=p_cov_used_vec_RD[1] # phi cov
+      )
+    }
+    
+    #
+    if (input$phi_type_RD=="Constant" & input$p_type_RD=="Covariates") {
+      
+      
+      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:2)]),
+                                   Model=model_name_vec_RD[1:2],
+                                   phi_cov_used=p_cov_used_vec_RD[1:2], # p cov if length(cov)=1
+                                   p_cov_used=p_cov_used_vec_RD[1:2] # phi cov
+      )
+    }
+    
+    #
+    if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Constant") {
+      
+      
+      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1,3)]),
+                                   Model=c(model_name_vec_RD[1],model_name_vec_RD[3]),
+                                   phi_cov_used=c(model_name_vec_RD[1],p_cov_used_vec_RD[3]), # p cov if length(cov)=1
+                                   p_cov_used=c(p_cov_used_vec_RD[1] ,p_cov_used_vec_RD[3]) # phi cov
+      )
+      
+    }
+    
+    #
+    if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Covariates") {
+      
+      
+      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:4)]),
+                                   Model=c(model_name_vec_RD[1:4]),
+                                   phi_cov_used=c(model_name_vec_RD[1:4]), # p cov if length(cov)=1
+                                   p_cov_used=c(p_cov_used_vec_RD[1:4]) # phi cov
+      )
+      
+    }
+    
+    #
+    if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant") {
+      
+      
+      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1,5)]),
+                                   Model=c(model_name_vec_RD[1],model_name_vec_RD[5]),
+                                   phi_cov_used=c(model_name_vec_RD[1],model_name_vec_RD[5]), # p cov if length(cov)=1
+                                   p_cov_used=c(p_cov_used_vec_RD[1],p_cov_used_vec_RD[5]) # phi cov
+      )
+      
+    }
+    
+    #
+    if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Covariates") {
+      
+      
+      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:2)]),
+                                   Model=c(model_name_vec_RD[1:2],model_name_vec_RD[5:6]),
+                                   phi_cov_used=c(model_name_vec_RD[1:2],model_name_vec_RD[5:6]), # p cov if length(cov)=1
+                                   p_cov_used=c(p_cov_used_vec_RD[1:2],p_cov_used_vec_RD[5:6]) # phi cov
+      )
+      
+    }
+    
+  } else { all_model_tab_RD<- data.frame(Num= "",
+                                         Model= "",
+                                         phi_cov_used= "", # p cov if length(cov)=1
+                                         p_cov_used="" # phi cov
+  ) }
+    
+  return(all_model_tab_RD)
+  
   })
-  
-  
-  
-  
+    
+    
+    
+    
   
   
   
   
   # Output: all_model_table_RD in the Settings section
-  output$all_model_table_RD<-renderFlexTable({
+  output$all_model_table_RD<-renderTable({
     
-    print_all_list_model_tab_RD<-all_list_model_tab_RD()
-    print_all_list_model_tab_RD<-vanilla.table(print_all_list_model_tab_RD)
-    
-    print_all_list_model_tab_RD[, c("Num","Model"), to = "header"] <- parLeft() # left align the column "Num"
-    print_all_list_model_tab_RD[, c("Num","Model")] <- parLeft() # left align header
-    
+     print_all_list_model_tab_RD<-all_list_model_tab_RD()
+     
+     #print_all_list_model_tab_RD<-vanilla.table(print_all_list_model_tab_RD)
+     
+     #print_all_list_model_tab_RD[, c("Num","Model"), to = "header"] <- parLeft() # left align the column "Num"
+     #print_all_list_model_tab_RD[, c("Num","Model")] <- parLeft() # left align header
+     
     return(print_all_list_model_tab_RD)
   })
   
@@ -3865,85 +3871,86 @@ shinyServer(function(input, output,session) {
   
   # *** all_ana_model_table_RD in the Analysing section
   
-  all_ana_model_table_RD<-reactive({
+all_ana_model_table_RD<-reactive({
     
-    input_not_null <- isTRUE(input$p_type_RD!="" & input$phi_type_RD!="")
+  input_not_null <- isTRUE(input$p_type_RD!="" & input$phi_type_RD!="")
     
-    if ( input_not_null == TRUE ) {
+  if ( input_not_null == TRUE ) {
+    
+    if (run_button_counts_RD$counts!=0) {
+
+      # num_max vector, the number of times a model hitting the maximum logl
       
-      if (run_button_counts_RD$counts!=0) {
-        
-        # num_max vector, the number of times a model hitting the maximum logl
-        
-        Num<-all_list_model_tab_RD()$Num
-        
-        # model_name_vec_RD
-        
-        model_name_vec_RD<-all_list_model_tab_RD()$Model
-        
-        # cov_used_vec_RD
-        
-        p_cov_used<-all_list_model_tab_RD()$p_cov_used
-        phi_cov_used<-all_list_model_tab_RD()$phi_cov_used
-        
-        
-        #*** time_spent vector, two cov case
-        time_spent<-rep(c(""),total_no_fits_RD())
-        
-        
-        #*** no. of times hitting the MLE  
-        
-        num_max<- rep(c(""),total_no_fits_RD())
-        
-        
-        # chechinput to print out the max_logls 
-        
-        print_logLs<-rep(c(""),total_no_fits_RD())
-        
-        
-      } else {
-        
-        # num_max vector, the number of times a model hitting the maximum logl
-        
-        Num<-all_list_model_tab_RD()$Num
-        
-        # model_name_vec_RD
-        
-        model_name_vec_RD<-all_list_model_tab_RD()$Model
-        
-        # cov_used_vec_RD
-        
-        p_cov_used<-all_list_model_tab_RD()$p_cov_used
-        phi_cov_used<-all_list_model_tab_RD()$phi_cov_used
-        
-        # if reset or did not hit the run button
-        time_spent<-rep(c(""),total_no_fits_RD())
-        
-        num_max<- rep(c(""),total_no_fits_RD())
-        
-        print_logLs<-rep(c(""),total_no_fits_RD())
-      }
+      Num<-all_list_model_tab_RD()$Num
+      
+      # model_name_vec_RD
+      
+      model_name_vec_RD<-all_list_model_tab_RD()$Model
+      
+      # cov_used_vec_RD
+      
+      p_cov_used<-all_list_model_tab_RD()$p_cov_used
+      phi_cov_used<-all_list_model_tab_RD()$phi_cov_used
       
       
-      # Table to print out *** all_list_
-      draft_all_model_ana_tab_RD<-data.frame(Num= Num,
-                                             Model=model_name_vec_RD,
-                                             phi_cov_used=p_cov_used,
-                                             p_cov_used=p_cov_used,
-                                             time_spent=time_spent,
-                                             num_max= num_max,
-                                             print_logLs=print_logLs)
+      #*** time_spent vector, two cov case
+      time_spent<-rep(c(""),total_no_fits_RD())
       
+      
+      #*** no. of times hitting the MLE  
+      
+      num_max<- rep(c(""),total_no_fits_RD())
+      
+      
+      # chechinput to print out the max_logls 
+      
+      print_logLs<-rep(c(""),total_no_fits_RD())
+
+      
+    } else {
+      
+      # num_max vector, the number of times a model hitting the maximum logl
+      
+      Num<-all_list_model_tab_RD()$Num
+      
+      # model_name_vec_RD
+      
+      model_name_vec_RD<-all_list_model_tab_RD()$Model
+      
+      # cov_used_vec_RD
+      
+      p_cov_used<-all_list_model_tab_RD()$p_cov_used
+      phi_cov_used<-all_list_model_tab_RD()$phi_cov_used
+      
+      # if reset or did not hit the run button
+      time_spent<-rep(c(""),total_no_fits_RD())
+      
+      num_max<- rep(c(""),total_no_fits_RD())
+      
+      print_logLs<-rep(c(""),total_no_fits_RD())
+    }
+    
+    
+    # Table to print out *** all_list_
+    draft_all_model_ana_tab_RD<-data.frame(Num= Num,
+                                           Model=model_name_vec_RD,
+                                           phi_cov_used=p_cov_used,
+                                           p_cov_used=p_cov_used,
+                                           time_spent=time_spent,
+                                           num_max= num_max
+                                           #print_logLs=print_logLs
+                                           )
+    
     } else { 
       
-      draft_all_model_ana_tab_RD<- data.frame(Num= "",
-                                              Model= "",
-                                              phi_cov_used= "", 
-                                              p_cov_used= "", 
-                                              time_spent="",
-                                              num_max= "",
-                                              print_logLs=""
-      ) 
+   draft_all_model_ana_tab_RD<- data.frame(Num= "",
+                                           Model= "",
+                                           phi_cov_used= "", 
+                                           p_cov_used= "", 
+                                           time_spent="",
+                                           num_max= ""
+                                          # print_logLs=""
+                                           ) 
     }
     
     # returns one table element
@@ -3953,13 +3960,13 @@ shinyServer(function(input, output,session) {
   
   
   
-  output$all_ana_model_table_RD<-renderFlexTable({
+  output$all_ana_model_table_RD<-renderTable({
     
     # Create checkboxes
     #all_ana_model_table_RD()$all_ana_model_table_RD$print_max_logLs <- 
     #                        paste0('<label><input type="checkbox" id="car', 
     #                        1:6, '"> <span>') # 1:total_no_models()
-    #rownames(mymtcars), '</span></label>')
+                            #rownames(mymtcars), '</span></label>')
     
     # flex_table <- vanilla.table(d_all_ana_model_table_RD()$draft_all_model_ana_tab_RD) # convert to FlexTable objet
     
@@ -3975,16 +3982,16 @@ shinyServer(function(input, output,session) {
     
     null_values<-flex_tab$print_logLs
     
-    flex_tab$print_logLs<-  paste0('<label><input type="checkbox" id="flex_Num', 
-                                   1:total_no_fits_RD(), '"> <span>', # 1:total_no_models()
-                                   null_values, '</span></label>')
+    #flex_tab$print_logLs<-  paste0('<label><input type="checkbox" id="flex_Num', 
+    #                        1:total_no_fits_RD(), '"> <span>', # 1:total_no_models()
+    #                        null_values, '</span></label>')
     
-    flex_table<- vanilla.table(flex_tab)
+    #flex_table<- vanilla.table(flex_tab)
+
+    #flex_table[, c("Num","Model"), to = "header"] <- parLeft() # left align the column "Num"
+    #flex_table[, c("Num","Model")] <- parLeft() # left align header
     
-    flex_table[, c("Num","Model"), to = "header"] <- parLeft() # left align the column "Num"
-    flex_table[, c("Num","Model")] <- parLeft() # left align header
-    
-    return(flex_table)
+    return(flex_ta)
   })
   
   
@@ -4007,8 +4014,8 @@ shinyServer(function(input, output,session) {
     
     
   })
-  
-  
+
+
   ################################ (RD) predicted plot
   
   # set new reactive values of the number of hits of actionButton
@@ -4077,7 +4084,7 @@ shinyServer(function(input, output,session) {
     
   )
   
-  ##  
+##  
   # predicted data and CI as a table
   
   download_predicted_data_RD<-reactive({
@@ -4110,11 +4117,11 @@ shinyServer(function(input, output,session) {
   )
   
   
+
+
   
   
-  
-  
-  
+
   ################################  estimates results
   output$estimates_RD <- renderTable({
     return(est.tab_RD())
@@ -4137,8 +4144,7 @@ shinyServer(function(input, output,session) {
     
   }) 
   
-  
-  # the end of server function  
-  
+
+# the end of server function  
   
 })
