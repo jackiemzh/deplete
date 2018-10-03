@@ -13,8 +13,9 @@ library(shinycssloaders)
 
 
 ## ui.R ##
-shinyUI(fluidPage(
-                theme = shinytheme("sandstone"),
+shinyUI(
+  
+  fluidPage(theme = shinytheme("sandstone"),
                 
                 titlePanel("DEPLETE"),
                 
@@ -57,7 +58,7 @@ shinyUI(fluidPage(
                                                                      'text/comma-separated-values,text/plain',
                                                                      '.csv',
                                                                      '.xlsx')
-                                                         ),
+                                                                  ),
                                                          
                                                          # Input: Checkbox if file has header ----
                                                          checkboxInput("header", h4("Check if file has headers"), TRUE),
@@ -65,7 +66,7 @@ shinyUI(fluidPage(
                                                          # Output: preview data ++++
                                                          wellPanel(h4("Preview dataset"),
                                                                    DT::dataTableOutput("data1")
-                                                         ),
+                                                                   ),
                                                          
                                                          tags$hr()
                                                          
@@ -88,7 +89,7 @@ shinyUI(fluidPage(
                                                          
                                                          # potential models output
                                                          wellPanel(h4("A list of models to be fitted."),
-                                                                   tableOutput("all_model_table")
+                                                                    tableOutput("all_model_table")
                                                          ),
                                                          
                                                          
@@ -112,31 +113,31 @@ shinyUI(fluidPage(
                                                                                        value = c(7,10)
                                                                            )
                                                                            
-                                                                           #selectInput("cov_num", 
-                                                                           #             h4("How many covariates considered?"), c("1", "2")
-                                                                           # )
+                                                                          #selectInput("cov_num", 
+                                                                          #             h4("How many covariates considered?"), c("1", "2")
+                                                                          # )
+                                                                          
+                                                                          # *** conditional options for classic model
                                                                            
-                                                                           # *** conditional options for classic model
                                                                            
-                                                                           
-                                                         ),
+                                                                          ),
                                                          
                                                          # reset inputs to default
                                                          
                                                          #uiOutput('resetable_input'),
                                                          #tags$hr(),
-                                                         
+                                                  
                                                          actionButton("reset_input", "Reset to default",
                                                                       icon("refresh"), # (paper-plan, refresh)
                                                                       style="color: #fff; background-color: #74aad8; border-color: #2e6da4"
-                                                         ),
+                                                                      ),
                                                          
                                                          tags$hr()
                                                          
                                                          # *** add more options in settings for classic model
                                                          
                                                          # submitButton("Apply")
-                                                ),
+                                                         ),
                                                 
                                                 tabPanel(h5("Analysing"),icon = icon("laptop", lib = "font-awesome"),
                                                          
@@ -150,9 +151,9 @@ shinyUI(fluidPage(
                                                          
                                                          
                                                          h4("To avoid local maximum in the maximum likelihood estimation, we suggest run each model multiple times.
-                                                            We suggest at least two maximum are found to make sure the algorithm is optimised.
-                                                            Please specify the number of iterations used for each model (default is five). 
-                                                            "),
+                                                             We suggest at least two maximum are found to make sure the algorithm is optimised.
+                                                             Please specify the number of iterations used for each model (default is five). 
+                                                             "),
                                                          
                                                          # updating potential models situation (done, running or waiting) while once hit the run button
                                                          
@@ -169,10 +170,10 @@ shinyUI(fluidPage(
                                                          
                                                          
                                                          # Test output
-                                                         tableOutput("out2"),
+                                                          tableOutput("out2"),
                                                          
                                                          # Input: data column number ----
-                                                         
+
                                                          numericInput("num_iteration", 
                                                                       h4("Indicate the number of iterations"), 
                                                                       value = 5),
@@ -193,7 +194,7 @@ shinyUI(fluidPage(
                                                          actionLink("link_to_tabpanel_results_tab", h4("continue to Results")),
                                                          
                                                          tags$hr()
-                                                         ),
+                                                        ),
                                                 tabPanel(h5("Results"), icon = icon("stats", lib = "glyphicon"),
                                                          
                                                          
@@ -224,7 +225,7 @@ shinyUI(fluidPage(
                                                                               
                                                                               tags$hr()
                                                                               
-                                                                     ),
+                                                                              ),
                                                                      
                                                                      tabPanel("Model_comparison", icon = icon("sort-by-attributes", lib = "glyphicon"),
                                                                               #icon = icon("list-alt"),
@@ -237,36 +238,36 @@ shinyUI(fluidPage(
                                                                               downloadButton("downloadModelCom", "Download results",
                                                                                              style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
                                                                               tags$hr()
-                                                                     ),
+                                                                              )
                                                                      
-                                                                     tabPanel("Estimates", icon = icon("th-list", lib = "font-awesome"),
+                                                                     #tabPanel("Estimates", icon = icon("th-list", lib = "font-awesome"),
                                                                               # "table"
                                                                               # Output: classic model estimates ++++
-                                                                              tableOutput("estimates"),
+                                                                    #          tableOutput("estimates"),
                                                                               
                                                                               
                                                                               # Button
-                                                                              downloadButton("downloadEstimates", "Download estiamtes",
-                                                                                             style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
-                                                                              tags$hr()
-                                                                     )
+                                                                    #          downloadButton("downloadEstimates", "Download estiamtes",
+                                                                    #                         style="color: #fff; background-color: #337ab7; border-color: #2e6da4"),
+                                                                    #          tags$hr()
+                                                                    #          )
                                                                      
                                                                      #tabPanel("Predicted data", 
-                                                                     
-                                                                     # Output: predicted values from a classic model ++++
-                                                                     #          tableOutput("predicted_table")
-                                                                     
-                                                                     
+                                                                              
+                                                                              # Output: predicted values from a classic model ++++
+                                                                    #          tableOutput("predicted_table")
+                                                                              
+                                                                              
                                                                      #         ) 
-                                                         )
-                                                )
-                                                         ),      
-                                    
+                                                                     )
+                                                        )
+                                                  ),      
+                                     
                                     conditionalPanel(condition="$('html').hasClass('shiny-busy')",
                                                      tags$div("Loading...",id="loadmessage")
-                                    )   
+                                                    )   
                                     ),
-                           
+
                            #################### RD model display tab
                            tabPanel("Robust design model",
                                     
@@ -318,13 +319,12 @@ shinyUI(fluidPage(
                                                          ),
                                                          
                                                          
-                                                         tableOutput("out3_RD"),
                                                          
                                                          # potential models output
                                                          wellPanel(h4("A list of models to be fitted."),
                                                                    tableOutput("all_model_table_RD")
-                                                         ),
-                                                         
+                                                                   ),
+                                                        
                                                          
                                                          fluidRow(
                                                            column(3,
@@ -337,13 +337,13 @@ shinyUI(fluidPage(
                                                                   
                                                                   selectInput("equ_secondary_num_yn", 
                                                                               h5("Equal number of secondary samples withinn each primary period?"), c("","Yes", "No")
-                                                                  ),
+                                                                              ),
                                                                   
                                                                   conditionalPanel( condition = "output.equ_secondary_num_null",
-                                                                                    
+                              
                                                                                     NULL
                                                                                     
-                                                                  ),
+                                                                                   ),
                                                                   
                                                                   conditionalPanel( condition = "output.equ_secondary_num_yes",
                                                                                     
@@ -353,7 +353,7 @@ shinyUI(fluidPage(
                                                                                                  h6("  Indicate the number of secondary samples"), 
                                                                                                  value = 2)
                                                                                     
-                                                                  ),
+                                                                                   ),
                                                                   
                                                                   conditionalPanel( condition = "output.equ_secondary_num_no",
                                                                                     
@@ -362,13 +362,13 @@ shinyUI(fluidPage(
                                                                                     numericInput("RD_index", 
                                                                                                  h6("  Robust design index column number"), 
                                                                                                  value = 2)
-                                                                  )
+                                                                                   )
+                                                                                    
+                                                                                    ## *** end of secondary sample conditional options for RD model
+                                                                  ),
                                                                   
-                                                                  ## *** end of secondary sample conditional options for RD model
-                                                           ),
-                                                           
-                                                           
-                                                           
+                                                                  
+                                                                  
                                                            
                                                            column(4, offset = 1,
                                                                   
@@ -383,17 +383,17 @@ shinyUI(fluidPage(
                                                                                     sliderInput("cov_col_range_RD", "Indicate covariate column numbers:",
                                                                                                 min = 0, max = 20, # *** customise column range?
                                                                                                 value = c(12,18)
-                                                                                    )
+                                                                                                )
                                                                                     
                                                                                     ## end of conditional options for RD model
-                                                                  )
+                                                                                   )
                                                                   
                                                                   
                                                                   # *** add more options in settings for RD model
                                                                   
                                                                   # submitButton("Apply")
                                                                   
-                                                           ),
+                                                                  ),
                                                            
                                                            column(4,
                                                                   
@@ -403,16 +403,16 @@ shinyUI(fluidPage(
                                                                   selectInput("phi_type_RD", 
                                                                               h4("Define transition probability type"), 
                                                                               c("","All","Constant", "Covariates","Time-varying")
-                                                                  ),
+                                                                              ),
                                                                   
                                                                   # Input: p type  ----  options conditional cov_yn
                                                                   selectInput("p_type_RD", 
                                                                               h4("Define capture probability type"), 
                                                                               c("","All","Constant", "Covariates")
-                                                                  )
+                                                                              )
                                                                   
                                                                   
-                                                           )
+                                                                   )
                                                            
                                                            # end of three column page
                                                          ),
@@ -427,9 +427,9 @@ shinyUI(fluidPage(
                                                          actionButton("reset_input_RD", "Reset to default",
                                                                       icon("refresh"), # (paper-plan, refresh)
                                                                       style="color: #fff; background-color: #74aad8; border-color: #2e6da4"
-                                                         ),
+                                                                      ),
                                                          
-                                                         
+                                                        
                                                          tags$hr()
                                                          
                                                          ),
@@ -437,7 +437,7 @@ shinyUI(fluidPage(
                                                 tabPanel(h5("Analysing"),icon = icon("laptop", lib = "font-awesome"),
                                                          
                                                          #shinyjs::useShinyjs(), # from shinyjs library
-                                                         value = "analysis_RD-panel", # name this tab
+                                                       value = "analysis_RD-panel", # name this tab
                                                          
                                                          h4("Analyse your dataset."),
                                                          
@@ -446,27 +446,31 @@ shinyUI(fluidPage(
                                                          
                                                          
                                                          h4("To avoid local maximum in the maximum likelihood estimation, we suggest run each model multiple times.
-                                                            We suggest at least two maximum are found to make sure the algorithm is optimised.
-                                                            Please specify the number of iterations used for each model (default is five). 
-                                                            "),
+                                                             We suggest at least two maximum are found to make sure the algorithm is optimised.
+                                                             Please specify the number of iterations used for each model (default is five). 
+                                                             "),
                                                          
-                                                         
+                                                       
                                                          # updating potential models situation (done, running or waiting) while once hit the run button
                                                          
                                                          wellPanel(h4("Model summary"),
                                                                    
                                                                    tableOutput("all_ana_model_table_RD")
-                                                         ),
+                                                                   ),
+                                                                   
+                                                         
+                                                         #tableOutput("out3_RD"),
+                                                         
                                                          
                                                          wellPanel(h4("Check maximum log-likelihood outputs"),
                                                                    
                                                                    # MLE outputs
                                                                    
-                                                                   verbatimTextOutput("check_mle_RD")
+                                                                    verbatimTextOutput("check_mle_RD")
                                                          ),
-                                                         
-                                                         
-                                                         
+                                                                  
+                                                        
+
                                                          # Input: (RD) data column number ----
                                                          
                                                          numericInput("num_iteration_RD", 
@@ -559,12 +563,12 @@ shinyUI(fluidPage(
                                                                      #         ) 
                                                          )
                                                 )
-                                                         ),      
+                                                ),      
                                     
                                     conditionalPanel(condition="$('html').hasClass('shiny-busy')",
                                                      tags$div("Loading...",id="loadmessage")
                                     )   
-                                    ),        
+                           ),        
                            
                            
                            
@@ -578,17 +582,17 @@ shinyUI(fluidPage(
                            navbarMenu("More",
                                       tabPanel("Help!",
                                                h3("Coming soon..")
-                                      ),
+                                               ),
                                       tabPanel("About us",
                                                h3("Add infom..")
-                                      )
-                           ),
+                                               )
+                                      ),
                            
                            # add navbarPage() options
                            fluid = TRUE
-                )
-                # add fluidPage() options
+                            )
+               # add fluidPage() options
+                 ) 
   
   
-  
-))
+  ）
