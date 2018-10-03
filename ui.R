@@ -13,9 +13,7 @@ library(shinycssloaders)
 
 
 ## ui.R ##
-shinyUI(
-  
-  fluidPage(theme = shinytheme("sandstone"),
+shinyUI(fluidPage(theme = shinytheme("sandstone"),
                 
                 titlePanel("DEPLETE"),
                 
