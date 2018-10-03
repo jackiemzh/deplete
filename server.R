@@ -1,4 +1,3 @@
-
 library(shiny)
 library(xlsx)
 library(markdown)
@@ -14,14 +13,11 @@ library(shinythemes)
 library(shinycssloaders)
 #
 
-
-#
-#############
-
 ## server.R ##
 shinyServer(function(input, output, session) {
   
   
+    
   # reactive UI to reset (classic) inputs
   # if observe action button, reset to default
   observe({
@@ -1747,8 +1743,8 @@ shinyServer(function(input, output, session) {
   
   
   
-  
-  # ===================================================
+  #============================  #============================ RD prediction #============================ #============================ 
+  # =================================================== #============================ #============================ 
   # ###############################    RD models
   
   # RD no. of cov available
@@ -1774,17 +1770,6 @@ shinyServer(function(input, output, session) {
         no_fits<- (2+no_covariate_available_RD()) * (1+no_covariate_available_RD())
       }
       
-      if (input$phi_type_RD=="All" & input$p_type_RD=="Constant") {
-        no_fits<- 2+no_covariate_available_RD()
-      }
-      
-      if (input$phi_type_RD=="All" & input$p_type_RD=="Covariates") {
-        no_fits<- (2+no_covariate_available_RD()) * (1+no_covariate_available_RD())
-      }
-      
-      if (input$phi_type_RD=="Constant" & input$p_type_RD=="All") {
-        no_fits<- 1+no_covariate_available_RD()
-      }
       
       if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant") {
         no_fits<- 1
@@ -1794,37 +1779,29 @@ shinyServer(function(input, output, session) {
         no_fits<- 1+no_covariate_available_RD()
       }
       
-      if (input$phi_type_RD=="Covariates" & input$p_type_RD=="All") {
-        no_fits<- (1+no_covariate_available_RD())*(1+no_covariate_available_RD())
-      }
       
       if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Constant") {
-        no_fits<- 1+no_covariate_available_RD()
+        no_fits<- length(c(1,(no_covariate_available_RD()+2):(2*no_covariate_available_RD()+1)))
       }
       
       if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Covariates") {
-        no_fits<- (1+no_covariate_available_RD()) * (1+no_covariate_available_RD())
+        no_fits<- length(1:(2*no_covariate_available_RD()+2+no_covariate_available_RD()*no_covariate_available_RD()-1))
       }
       
-      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="All") {
-        no_fits<- 2*(1+no_covariate_available_RD())
-      }
       
       if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant") {
         no_fits<- 2
       }
       
       if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Covariates") {
-        no_fits<- 2* (1+no_covariate_available_RD())
+        no_fits<- length(c(1,
+                           (2*no_covariate_available_RD()+2+no_covariate_available_RD()*no_covariate_available_RD()):(2*no_covariate_available_RD()+2+no_covariate_available_RD()*no_covariate_available_RD()+no_covariate_available_RD())))
       }
 
     } else {
       
       # input$cov_yn_RD == "No"
       if (input$phi_type_RD=="All" & input$p_type_RD=="All") { no_fits<- 2 }
-      if (input$phi_type_RD=="Constant" & input$p_type_RD=="All") { no_fits<- 1 }
-      if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="All") { no_fits<- 2 }
-      if (input$phi_type_RD=="All" & input$p_type_RD=="Constant") { no_fits<- 2 }
       if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant") { no_fits<- 1 }
       if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant") { no_fits<- 2 }
       
@@ -1841,34 +1818,21 @@ shinyServer(function(input, output, session) {
     return(no_fits)
   })
   
-  # define cov names vector
+
   
-  #  zz_names<- reactive({
-    
-  # if (input$cov_yn_RD=="Yes") {
-      
-  #  data_all<- dataInput_RD()
-  #  all_names_RD<- names(data_all)
-  #  cov_names_RD<- all_names_RD[,input$cov_col_range_RD[1:2]]
-    
-  #  } else {NULL}
-    
-  #  return(cov_names_RD)
-  # })
-  
-  
+  # testing
   output$out3_RD <- renderTable({
    
     
     #data_cov_names_RD()
     
-   return()
+   return(cc.RD.prediction(cc=1)$time_spent.cc)
    
   })
   
   
   
-  # *** define cov (max is 1) considered in the model
+  # define cov (max is 1) considered in the model
   zz_RD<-reactive({
 
     if (input$cov_yn_RD=="Yes") {
@@ -1880,34 +1844,33 @@ shinyServer(function(input, output, session) {
         # one cov case
         
         cov1= data_all[,input$cov_col_range_RD[1]]; covariate_1=cov1-mean(cov1)
-        cov= data.frame(cov1=covariate_1)
+        cov= data.frame(phi_cov=covariate_1,p_cov=covariate_1)
         
       } else {
         
-        # all unique combinations of 2 covariates
-        # dim(two_cov_combin_index_vec)[1] = total_no_fits()
         
         all_cov_index_vec <-1:no_covariate_available_RD()
         
+        # set up a covariate array with length total_no_fits() elements
+        # phi_cov= data_all[,input$cov_col_range_RD[1]]; phi_covariate=phi_cov-mean(phi_cov)
+        #  p_cov= data_all[,input$cov_col_range_RD[1]+1]; p_covariate=p_cov-mean(p_cov)
+        
         # column.names=c("phi_cov","p_cov")
         # first and second columns corresponds to phi and p respectively
-        cov= array(NA, dim=c(T_RD(),2,total_no_fits_RD()) )
+         cov= array(NA, dim=c(T_RD(),2,total_no_fits_RD()) )
         
-
-       # set up a covariate array with length total_no_fits() elements
-       # phi_cov= data_all[,input$cov_col_range_RD[1]]; phi_covariate=phi_cov-mean(phi_cov)
-      #  p_cov= data_all[,input$cov_col_range_RD[1]+1]; p_covariate=p_cov-mean(p_cov)
-       
-        #*** update two covs for each of potential models
+        
+        # update phi_cov and p_cov column for each of potential models
         
         if (input$phi_type_RD=="All" & input$p_type_RD=="All") {
           
-          
           for (ii in 1:no_covariate_available_RD()) {
             
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phic, pcov case 
             ## define covariates for p from the 2nd model to the no_covariate_available_RD()+1 model in the table in the Settings section
             # adjust to p covariate index in the original dataset
-            p_cov_index <-  all_cov_index_vec[ii] + (input$cov_col_range_RD[1]-1)
+            p_cov_index <-  ii + (input$cov_col_range_RD[1]-1)
             p_cov_vec<-data_all[,p_cov_index]
             not_na_index<-which(!is.na(p_cov_vec))
             
@@ -1916,8 +1879,11 @@ shinyServer(function(input, output, session) {
             cov[,2,ii+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
             
             
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phicov, pc case 
+            
             # adjust to phi covariate index in the original dataset
-            phi_cov_index<- all_cov_index_vec[ii] + (input$cov_col_range_RD[1]-1)
+            phi_cov_index<- ii + (input$cov_col_range_RD[1]-1)
             phi_cov_vec<-data_all[,phi_cov_index]
             not_na_index<-which(!is.na(phi_cov_vec))
             
@@ -1926,42 +1892,180 @@ shinyServer(function(input, output, session) {
             cov[,1,ii+no_covariate_available_RD()+1][not_na_index]<- phi_cov_vec[not_na_index]- mean(phi_cov_vec[not_na_index])
             
             
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phicov, pcov case 
+            
             ## define covariates for p 
-            ## from the no_covariate_available_RD()*2+2 model to the no_covariate_available_RD()*(no_covariate_available_RD()+2)+1 model
+            ## from the no_covariate_available_RD()*2+2 model to the no_covariate_available_RD()^2+no_covariate_available_RD()*2+1 model
             # standarlise and update covariate array
-            cov[,2,ii+no_covariate_available_RD()*2+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
             
-            cov[,2,ii+no_covariate_available_RD()*3+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+            for (jj in 1:no_covariate_available_RD()) {
+              
+              cov[,2,ii+(jj+1)*no_covariate_available_RD()+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+              
+            }
             
-            cov[,2,ii+no_covariate_available_RD()*4+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+            #cov[,2,ii+no_covariate_available_RD()*2+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
             
-            cov[,2,ii+no_covariate_available_RD()*5+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+          #  cov[,2,ii+no_covariate_available_RD()*3+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+            
+           # cov[,2,ii+no_covariate_available_RD()*4+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+            
+          #  cov[,2,ii+no_covariate_available_RD()*5+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
             
             
             ## define covariates for phi
-            ## from the no_covariate_available_RD()*2+2 model to the no_covariate_available_RD()*(no_covariate_available_RD()+2)+1 model
+            ## from the no_covariate_available_RD()*2+2 model to the no_covariate_available_RD()^2+no_covariate_available_RD()*2+1 model
             # standarlise and update covariate array
-            start_ind<- ii*no_covariate_available_RD()-(no_covariate_available_RD()-1)+no_covariate_available_RD()*2+1
-            end_ind<- start_ind + no_covariate_available_RD()-1
             
-            cov[,1,start_ind:end_ind][not_na_index]<- phi_cov_vec[not_na_index]- mean(phi_cov_vec[not_na_index])
+            for (jj in 1:no_covariate_available_RD()) {
+              
+              cov[,1,jj+no_covariate_available_RD()*(ii-1)+no_covariate_available_RD()*2+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+              
+            }
             
-
+            
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phit, pc case -- No covariates - the no_covariate_available_RD()^2+no_covariate_available_RD()*2+2 model
+            
+            
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phit, pcov case 
+            
             ## define covariates for p
-            ## from the no_covariate_available_RD()*(no_covariate_available_RD()+2)+3 model to the end
+            ## from the no_covariate_available_RD()^2+no_covariate_available_RD()*2+3 model to the end
             # standarlise and update covariate array
             cov[,2,ii+no_covariate_available_RD()*(no_covariate_available_RD()+2)+2][not_na_index]<- 
               p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index])
+            
 
           }
           
-          
-        
           # the end of case input$phi_type_RD=="All" & input$p_type_RD=="All"
         }
         
-        
           
+        if (input$phi_type_RD=="Constant" & input$p_type_RD=="Covariates") {
+          
+          for (ii in 1:no_covariate_available_RD()) {
+            
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phic, pcov case 
+            ## define covariates for p from the 2nd model to the no_covariate_available_RD()+1 model in the table in the Settings section
+            # adjust to p covariate index in the original dataset
+            p_cov_index <-  ii + (input$cov_col_range_RD[1]-1)
+            p_cov_vec<-data_all[,p_cov_index]
+            not_na_index<-which(!is.na(p_cov_vec))
+            
+            # start from the 2nd arrary as the first model in the table in the Settings section is a constant model without any covaraites.
+            # standarlise and update covariate array
+            cov[,2,ii+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+          }
+          
+          # the end of case input$phi_type_RD=="constant" & input$p_type_RD=="cov"
+        }
+        
+        if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Constant") {
+          
+          for (ii in 1:no_covariate_available_RD()) {
+            
+            
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phicov, pc case 
+            
+            # adjust to phi covariate index in the original dataset
+            phi_cov_index<- ii + (input$cov_col_range_RD[1]-1)
+            phi_cov_vec<-data_all[,phi_cov_index]
+            not_na_index<-which(!is.na(phi_cov_vec))
+            
+            ## define covariates for phi from the no_covariate_available_RD()+2 model to the no_covariate_available_RD()*2+1 model
+            # standarlise and update covariate array
+            cov[,1,ii+1][not_na_index]<- phi_cov_vec[not_na_index]- mean(phi_cov_vec[not_na_index])
+            
+          }
+          
+          # the end of case input$phi_type_RD=="All" & input$p_type_RD=="All"
+        }
+        
+        if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Covariates") {
+          
+          for (ii in 1:no_covariate_available_RD()) {
+            
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phic, pcov case 
+            ## define covariates for p from the 2nd model to the no_covariate_available_RD()+1 model in the table in the Settings section
+            # adjust to p covariate index in the original dataset
+            p_cov_index <-  ii + (input$cov_col_range_RD[1]-1)
+            p_cov_vec<-data_all[,p_cov_index]
+            not_na_index<-which(!is.na(p_cov_vec))
+            
+            # start from the 2nd arrary as the first model in the table in the Settings section is a constant model without any covaraites.
+            # standarlise and update covariate array
+            cov[,2,ii+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+            
+            
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phicov, pc case 
+            
+            # adjust to phi covariate index in the original dataset
+            phi_cov_index<- ii + (input$cov_col_range_RD[1]-1)
+            phi_cov_vec<-data_all[,phi_cov_index]
+            not_na_index<-which(!is.na(phi_cov_vec))
+            
+            ## define covariates for phi from the no_covariate_available_RD()+2 model to the no_covariate_available_RD()*2+1 model
+            # standarlise and update covariate array
+            cov[,1,ii+no_covariate_available_RD()+1][not_na_index]<- phi_cov_vec[not_na_index]- mean(phi_cov_vec[not_na_index])
+            
+            
+            # ======= # ======= # ======= # ======= # ======= 
+            # ======= phicov, pcov case 
+            
+            ## define covariates for p 
+            ## from the no_covariate_available_RD()*2+2 model to the no_covariate_available_RD()^2+no_covariate_available_RD()*2+1 model
+            # standarlise and update covariate array
+            
+            for (jj in 1:no_covariate_available_RD()) {
+              
+              cov[,2,ii+(jj+1)*no_covariate_available_RD()+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+              
+            }
+            
+            ## define covariates for phi
+            ## from the no_covariate_available_RD()*2+2 model to the no_covariate_available_RD()^2+no_covariate_available_RD()*2+1 model
+            # standarlise and update covariate array
+            
+            for (jj in 1:no_covariate_available_RD()) {
+              
+              cov[,1,jj+no_covariate_available_RD()*(ii-1)+no_covariate_available_RD()*2+1][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index]) 
+              
+            }
+            
+            
+          }
+          
+          # the end of case input$phi_type_RD=="All" & input$p_type_RD=="All"
+        }
+
+        if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Covariates") {
+          
+           for (ii in 1:no_covariate_available_RD()) {
+           # ======= # ======= # ======= # ======= # ======= 
+           # ======= phit, pcov case 
+           
+           p_cov_index <-  ii + (input$cov_col_range_RD[1]-1)
+           p_cov_vec<-data_all[,p_cov_index]
+           not_na_index<-which(!is.na(p_cov_vec))
+           
+           ## define covariates for p
+           ## from the 3rd model to the end
+           # standarlise and update covariate array
+           cov[,2,ii+2][not_na_index]<- p_cov_vec[not_na_index]- mean(p_cov_vec[not_na_index])
+           
+           }
+           
+         }
+         
+        
       }
       
     } else {
@@ -1983,21 +2087,21 @@ shinyServer(function(input, output, session) {
   
   
   
-  # **** run (kk)th RD model, kk_RD is an index ------
+  # run the (phic,pc) RD model, cc is an index ------
 
-  kk.RD.prediction<- function(kk_RD=1){
+  cc.RD.prediction<- function(cc=1){
     
     # kk index is an parameter
-    force(kk_RD)
+    force(cc)
     
     data_all<- dataInput_RD()
     data1=data_all[,input$data_colnum_RD]
     
     
-    # read functions 
+    ## read functions 
     inv <- function(m) {class(try(solve(m),silent=T))=="matrix"}
     
-    # phi(c), p(c)
+    # phi(c), p(c) with 3 params
     RD.phic.pc.logl <- function (param,data, T, D, k, missed){
       
       data[missed]=0
@@ -2086,7 +2190,7 @@ shinyServer(function(input, output, session) {
       return(-logL)
     }
     
-    # phi(c), p(cov)
+    # phi(c), p(cov) with 4 params
     RD.phic.pcov.logl <- function (param,data, T, D, k, missed, z){
       
       data[missed]=0
@@ -2175,7 +2279,7 @@ shinyServer(function(input, output, session) {
       return(-logL)
     }
     
-    # phi(cov), p(c)
+    # phi(cov), p(c) with 4 params
     RD.phicov.pc.logl <- function (param,data, T, D, k, missed, z){
       
       data[missed]=0
@@ -2264,7 +2368,96 @@ shinyServer(function(input, output, session) {
       return(-logL)
     }
     
-    # phi(t), p(c)
+    # phi(cov), p(cov) with 5 params
+    RD.phicov.pcov.logl <- function (param,data, T, D, k, missed, z1, z2){
+      
+      data[missed]=0
+      
+      sim.K=T  #  total no. of occasions
+      sim.k= k # as.integer(exp( param(1) ) )   # no. of secondary occasisons (param)
+      sim.T=sim.K/sim.k  # no. of primary occasions
+      
+      # param
+      phi12<-expit(param[1]+param[2]*z1); phi21 <- 1-phi12; pi<-c(mean(phi21),1-mean(phi21))
+      p <- expit(param[3]+param[4]*z1)
+      n01<-exp(param[5]);N=n01+D
+      
+      
+      phi <-  list(matrix(rep(c(0,1),2), ncol=2,byrow=TRUE)); phi <- rep(phi,(sim.T)-1)
+      for (j in 1:((sim.T)-1)) {phi[[j]]<- matrix(c(1-phi12[j],phi12[j],phi21[j],1-phi21[j]), ncol=2,byrow=TRUE)}
+      
+      
+      # prob of being removed, primary periods in rows (1,), secondary in cols (1,1)
+      alpha<-matrix(NA,ncol=sim.K, nrow=sim.K)
+      
+      # prob of being in state 1 (observable) & not being removed
+      beta1<-matrix(NA,ncol=sim.K, nrow=sim.K)
+      
+      # prob of being in state 2 (unobservable) & not being removed
+      beta2<-matrix(NA,ncol=sim.K, nrow=sim.K)
+      
+      
+      # jj=1, ii=1
+      alpha[1,1]<- pi[1]*p[1]
+      beta1[1,1]<- (alpha[1,1]/p[1])*(1-p[1]) # state 1 & not being removed 
+      beta2[1,1]<- 1-(alpha[1,1]/p[1])                # state 2 & not being removed
+      
+      # jj=2:sim.k, ii=1
+      
+      for (jj in 2:sim.k){
+        
+        alpha[1,jj]<- (alpha[1,jj-1]/p[jj-1]*(1-p[jj-1])*p[jj])
+        beta1[1,jj]<- (beta1[1,jj-1]*(1-p[jj]))
+        beta2[1,jj]<- (beta2[1,jj-1])
+      }
+      
+      
+      #   #   #   #   #   #   #   #   #   from 2nd primary period
+      for (ii in 2:sim.T) {
+        
+        phi11=phi[[ii-1]][1,1]; phi12=phi[[ii-1]][1,2];
+        phi21=phi[[ii-1]][2,1]; phi22=phi[[ii-1]][2,2];       
+        
+        for (jj in 1:sim.k) {
+          
+          if (jj==1) {
+            alpha[ii,1]<- (beta1[ii-1,sim.k]*phi11 + beta2[ii-1,sim.k]*phi21)*p[ii]
+            beta1[ii,1]<- (alpha[ii,1]/p[ii])*(1-p[ii])  # state 1 & not being removed 
+            beta2[ii,1]<-  beta1[ii-1,sim.k]*phi12 + beta2[ii-1,sim.k]*phi22    # state 2 & not being removed
+          }
+          else {
+            alpha[ii,jj]<- (alpha[ii,jj-1]/p[jj-1]*(1-p[jj-1])*p[jj])
+            beta1[ii,jj]<- beta1[ii,jj-1]*(1-p[ii])
+            beta2[ii,jj]<- beta2[ii,jj-1]
+          }
+          
+        }
+      }
+      
+      L0=1-sum(alpha[1:sim.T,1:sim.k])
+      
+      L=numeric()
+      
+      o=1
+      for (ii in 1:sim.T) {
+        
+        for (jj in 1:sim.k) {
+          
+          L[o]=alpha[ii,jj]
+          o=o+1
+        }}
+      
+      L=L[1:sim.K]  
+      
+      L[which(L==0)]<-10^(-10)
+      L[missed]<-10^(-10)
+      
+      logL=lgamma(N+1)-sum(lgamma(data[-missed]+1))-lgamma(n01+1)+sum(data*log(L)) + n01*log(L0)
+      
+      return(-logL)
+    }
+    
+    # phi(t), p(c) with K+1 params
     RD.phit.pc.logl <- function (param,data, T, D, k,missed){
       
       data[missed]=0
@@ -2353,16 +2546,8 @@ shinyServer(function(input, output, session) {
       return(-logL)
     }
     
-    fit.phit.pc.optim<- function(param,data1=data1, T1=T1, D1=D1, k1=k1, missed=missed) {
-      try(optim(par=param,
-                fn=RD.phit.pc.logl,
-                method="BFGS",
-                #method="L-BFGS-B",lower = l.bound , upper = u.bound,
-                hessian=TRUE,
-                data=data1,T=T1,D=D1,k=k1,missed=missed),TRUE)}
-    
-    # phi(t), p(cov)
-    RD.phit.pcov.logl <- function (param,data, T, D, k,missed,z){
+    # phi(t), p(cov) with K+2 params
+    RD.phit.pcov.logl <- function (param,data, T, D, k,missed, z){
       
       data[missed]=0
       
@@ -2372,7 +2557,7 @@ shinyServer(function(input, output, session) {
       
       # param
       phi12<-expit(param[1:((sim.T)-1)]); phi21 <- 1-phi12; pi<-c(mean(phi21),1-mean(phi21))
-      p <- expit(param[sim.T]+ param[sim.T+1]*z)
+      p <- expit(param[sim.T]+param[(sim.T)+1]*z)
       n01<-exp(param[(sim.T)+2]);N=n01+D
       
       
@@ -2450,86 +2635,132 @@ shinyServer(function(input, output, session) {
       return(-logL)
     }
     
+    # run (fit.phic.pc.optim) function
+    fit.phic.pc.optim<- function(param,data1=data1, T1=T1, D1=D1, k1=k1, missed=missed) {
+      try(optim(par=param,
+                fn=RD.phic.pc.logl,
+                method="BFGS",
+                #method="L-BFGS-B",lower = l.bound , upper = u.bound,
+                hessian=TRUE,
+                data=data1,T=T1,D=D1,k=k1,missed=missed),TRUE)}
     
-    
-    
- 
-    
-    #*** the (k)th RD model according to the no. of cov
-    
-    kk_results_RD<-reactive({
+  
+      # the (cc)th RD model
       
       # run the model according to Settings
       
-      nput_not_null <- isTRUE(input$p_type_RD!="" & input$phi_type_RD!="")
+      input_not_null <- isTRUE(input$p_type_RD!="" & input$phi_type_RD!="")
       
       if (run_button_counts_RD$counts!=0 & input_not_null == TRUE ) {
         
         input$run_ana_button_RD # run whenever RUN button is clicked
         
         
-        if (input$phi_type_RD=="All" & input$p_type_RD=="All" ) {
+        if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant" ) {
           
-          # *** update this for all models
+          # update this for all models
           time_spent=numeric()
-          
-          # fit all possible combinations of RD models
-         
-          # phi(t), p(c) 
-          
-          #l.prob=0.001
-          #u.prob=0.999
-          #l.bound<- c(rep(logit(l.prob),(T_RD()/no_k()) ),log(0.0001))
-          #u.bound<- c(rep(logit(u.prob),(T_RD()/no_k()) ),log(10000))
-          
-          # fit.phic.pc<- function(param,data1=data1, T1=T1, D1=D1, k1=k1, missed) {
-          # try(optim(par=param,
-          #            fn=RD.phit.pc.logl,
-          #            method="BFGS",
-                      #method="L-BFGS-B",lower = l.bound , upper = u.bound,
-          #            hessian=TRUE,
-          #            data=data1_RD,T=T_RD(),D=D_RD(),k=no_k(),missed=miss_occ_RD())),TRUE)}
-          
-          
           
           # input iteration number
           n.rep= isolate(input$num_iteration_RD)
           
           # initial estiamte elements
-          N0.test<-p.test<-loglike.test<-numeric()
-          phi12.test<-matrix(NA,ncol=T_RD()/no_k()-1,nrow=n.rep)
+          N0.cc.test<-phi12.cc.test<-p.cc.test<-loglike.cc.test<-numeric()
+          hessians.cc.test <- list(matrix(rep(0,3*3), ncol=3)) # 3 is the length(param)
+          hessians.cc.test <- rep(hessians.cc.test,n.rep)
           
+          #phi12.test<-matrix(NA,ncol=T_RD()/no_k()-1,nrow=n.rep)
+          
+          
+          # initialise iteration numbers
           j=1
+          k=1
           
           # Start the clock for optimisation =-=-=-=-
           ptm <- proc.time()
           
+          # run iterations
           while (j<(n.rep+1)) { 
             
             # initial starting param
-            param=c(logit(runif((T_RD()/no_k()-1),0.1,0.9)), #phi12
+            param=c(logit(runif(1,0.1,0.9)), #phi12
                     logit(runif(1,0.1,0.9)),# p
                     log(runif(1,10,200)) ) # N0
             
-            # *** save as n.rep elements
-            fit.phit.pc <- fit.phit.pc.optim(param,
-                                             data1=data1, T1=T_RD(), D1=D_RD(), k1=no_k(), missed=miss_occ_RD())
+            # run the model
+            fit <- fit.phic.pc.optim(param,
+                                     data1=data1, T1=T_RD(), D1=D_RD(), k1=no_k(), missed=miss_occ_RD())
+            
+            if (inv(fit$hessian)==TRUE) { # check if hessian is available
+              if (k<(n.rep+1)) {
+                
+                # record estimates for each iteration
+                p.cc.test[k] <- expit(fit$par[1])
+                phi12.cc.test[k] <- expit(fit$par[2])
+                N0.cc.test[k] <- exp(fit$par[3])
+                
+                # record hessians for each iteration
+                hessians.cc.test[[k]]=fit$hessian
+                
+                
+                # record loglike for each iteration
+                # these will be double checked by users
+                loglike.cc.test[k]<- -fit$value
+                
+                k=k+1      
+              } }
+            j=j+1
+            
+            # the end of iterations
           }
           
+
           # Stop the clock =-=-=-=-
           t.record<-proc.time() - ptm
           
           # Time spent
-          t.spent.phit.pc<- as.numeric(names(table(t.record[1])))
-
+          time_spent.cc<- as.numeric(names(table(t.record[1])))
+          
+          # put together results for all iterations
+          AIC.cc.test <- - 2*loglike.cc.test + (2*length(param))
+          
+         # mle.test.cc<-   data.frame(p_int=p.cc.test,
+        #                             phi12=phi12.cc.test,
+        #                             N0=N0.cc.test,
+        #                             loglike=loglike.cc.test,
+        #                             AIC= AIC.cc.test)
+          
+          # observe the number of times hitting the MLEs
+          loglike.cc.test<-signif(loglike.cc.test, 7)
+          num.max.location.cc<- length(which(loglike.cc.test==max(loglike.cc.test)))
+          
+          
+          # observe which iteration has MLEs
+          max.location.cc<-which(loglike.cc.test==max(loglike.cc.test))[1]
+          
+          # record MLEs corresponding to the max.location.2cov
+          fit.p.int.cc <- p.cc.test[max.location.cc]
+          fit.phi12.cc <- phi12.cc.test[max.location.cc]
+          fit.N.cc <- N0.cc.test[max.location.cc]+D()
+          
+          # record the hessian corresponding to the max.location.2cov
+          fit.hessians.cc <- hessians.cc.test[[max.location.cc]]
+          fit.loglike.cc <- max(loglike.cc.test)
+          fit.AIC.cc<- - 2*fit.loglike.cc + (2*length(param))
+          
+          
+          # put together MLE results as well as loglike and AIC
+          fit.mle.results.cc<-   data.frame(p_int=fit.p.int.cc,
+                                            phi12=fit.phi12.cc,
+                                            N=fit.N.cc,
+                                            loglike=fit.loglike.cc,
+                                            AIC=fit.AIC.cc)
+          
+          
+          ## --- the end of (phic, pc) RD model
           
         }
         
-       
-        
-        if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant" ) {
-          
-        }
         
         if (input$phi_type_RD=="Constant" & input$p_type_RD=="Covariates" ) {
           
@@ -2553,26 +2784,85 @@ shinyServer(function(input, output, session) {
           
         }
         
-        
-        
-        
+
         }
         
       # kk_results_RD
       
-      })
-      
     
-return(list(RD.phit.pc=fit.phit.pc,
-            time_spent=t.spent.phit.pc))
+    return(list(#mle.test.cc=mle.test.cc, # results for all iteration
+                #hessians.cc.test=hessians.cc.test, # results for all iteration
+                fit.mle.results.cc=fit.mle.results.cc, # results for MLEs
+                fit.hessians.cc=fit.hessians.cc, # hessian for MLEs
+                time_spent.cc=time_spent.cc, # time spent
+                num.max.location.cc=num.max.location.cc # the number of times hitting the MLEs
+    ))
     
   }
   
   
   
  
+  # run all possible RD models
+  all.RD.prediction<- reactive({
+    
+    input_not_null <- isTRUE(input$p_type_RD!="" & input$phi_type_RD!="")
+    
+    if (run_button_counts_RD$counts!=0 & input_not_null == TRUE ) {
+      
+      data_all<- dataInput_RD()
+      
+      # always run the (phic, pc) model
+      cc.prediction <-cc.RD.prediction(cc=1)
+      
+      
+      if (input$cov_yn_RD=="Yes") {
+        
+        if (no_covariate_available_RD()==1) {
+          
+          # one cov case
+          
+          pt.1cov.prediction<-NULL
+          pt.2cov.prediction<-NULL
+          
+          #pt.1cov.prediction <- gg.geo.pt.1cov.prediction(gg=1) 
+          
+          # as there is only one covariate in the data
+          
+          #pt.2cov.prediction <- NULL
+          
+        } else {
+          
+          ### two cov case
+          pt.1cov.prediction<-NULL
+          pt.2cov.prediction<-NULL
+          
+        }
+        
+      } 
+      
+      
+    } else {
+      
+      # if reset or did not hit the action button
+      
+      cc.prediction<- NULL
+      pt.1cov.prediction<-NULL
+      pt.2cov.prediction<-NULL
+      
+    }
+    
+    # --- the end of action button condition 
+    
+    return(list(cc.prediction=cc.prediction
+    ))
+    
+  })
   
-  # fit all possible models
+  
+  #----------------------------------------
+  
+  
   
   # update z1 and z2 for each of potential models
   
@@ -2645,7 +2935,7 @@ return(list(RD.phit.pc=fit.phit.pc,
   
   
   
-  
+
    
   # old RD.prediction 
   RD.prediction <- reactive({
@@ -3605,7 +3895,7 @@ return(list(RD.phit.pc=fit.phit.pc,
   
   
   
-  
+  #============================  #============================  #============================  #============================  
   #============================ RD model outputs
   
   # Output: preview data
@@ -3769,10 +4059,9 @@ return(list(RD.phit.pc=fit.phit.pc,
     #
     if (input$phi_type_RD=="Constant" & input$p_type_RD=="Constant") {
       
-      
       all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[1]),
                                    Model=model_name_vec_RD[1],
-                                   phi_cov_used=p_cov_used_vec_RD[1], # p cov if length(cov)=1
+                                   phi_cov_used=phi_cov_used_vec_RD[1], # p cov if length(cov)=1
                                    p_cov_used=p_cov_used_vec_RD[1] # phi cov
       )
     }
@@ -3781,33 +4070,34 @@ return(list(RD.phit.pc=fit.phit.pc,
     if (input$phi_type_RD=="Constant" & input$p_type_RD=="Covariates") {
       
       
-      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:2)]),
-                                   Model=model_name_vec_RD[1:2],
-                                   phi_cov_used=p_cov_used_vec_RD[1:2], # p cov if length(cov)=1
-                                   p_cov_used=p_cov_used_vec_RD[1:2] # phi cov
+      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[1:(no_cov+1)]),
+                                   Model=model_name_vec_RD[1:(no_cov+1)],
+                                   phi_cov_used=phi_cov_used_vec_RD[1:(no_cov+1)], 
+                                   p_cov_used=p_cov_used_vec_RD[1:(no_cov+1)] 
       )
+      
     }
     
     #
     if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Constant") {
       
       
-      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1,3)]),
-                                   Model=c(model_name_vec_RD[1],model_name_vec_RD[3]),
-                                   phi_cov_used=c(model_name_vec_RD[1],p_cov_used_vec_RD[3]), # p cov if length(cov)=1
-                                   p_cov_used=c(p_cov_used_vec_RD[1] ,p_cov_used_vec_RD[3]) # phi cov
+      all_model_tab_RD<-data.frame(Num= seq_along(c(model_name_vec_RD[1],model_name_vec_RD[(no_cov+2):(2*no_cov+1)])),
+                                   Model=c(model_name_vec_RD[1],model_name_vec_RD[(no_cov+2):(2*no_cov+1)]),
+                                   phi_cov_used=c(phi_cov_used_vec_RD[1],phi_cov_used_vec_RD[(no_cov+2):(2*no_cov+1)]), 
+                                   p_cov_used=c(p_cov_used_vec_RD[1] ,p_cov_used_vec_RD[(no_cov+2):(2*no_cov+1)])
       )
       
     }
     
-    #
+    # 
     if (input$phi_type_RD=="Covariates" & input$p_type_RD=="Covariates") {
       
       
-      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:4)]),
-                                   Model=c(model_name_vec_RD[1:4]),
-                                   phi_cov_used=c(model_name_vec_RD[1:4]), # p cov if length(cov)=1
-                                   p_cov_used=c(p_cov_used_vec_RD[1:4]) # phi cov
+      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[1:(2*no_cov+2+no_cov*no_cov-1)]),
+                                   Model=c(model_name_vec_RD[1:(2*no_cov+2+no_cov*no_cov-1)]),
+                                   phi_cov_used=c(phi_cov_used_vec_RD[1:(2*no_cov+2+no_cov*no_cov-1)]), 
+                                   p_cov_used=c(p_cov_used_vec_RD[1:(2*no_cov+2+no_cov*no_cov-1)]) 
       )
       
     }
@@ -3816,10 +4106,10 @@ return(list(RD.phit.pc=fit.phit.pc,
     if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Constant") {
       
       
-      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1,5)]),
-                                   Model=c(model_name_vec_RD[1],model_name_vec_RD[5]),
-                                   phi_cov_used=c(model_name_vec_RD[1],model_name_vec_RD[5]), # p cov if length(cov)=1
-                                   p_cov_used=c(p_cov_used_vec_RD[1],p_cov_used_vec_RD[5]) # phi cov
+      all_model_tab_RD<-data.frame(Num= seq_along(c(model_name_vec_RD[1],model_name_vec_RD[(2*no_cov+2+no_cov*no_cov)])),
+                                   Model=c(model_name_vec_RD[1],model_name_vec_RD[(2*no_cov+2+no_cov*no_cov)]),
+                                   phi_cov_used=c(phi_cov_used_vec_RD[1],phi_cov_used_vec_RD[(2*no_cov+2+no_cov*no_cov)]), 
+                                   p_cov_used=c(p_cov_used_vec_RD[1],p_cov_used_vec_RD[(2*no_cov+2+no_cov*no_cov)])
       )
       
     }
@@ -3828,10 +4118,10 @@ return(list(RD.phit.pc=fit.phit.pc,
     if (input$phi_type_RD=="Time-varying" & input$p_type_RD=="Covariates") {
       
       
-      all_model_tab_RD<-data.frame(Num= seq_along(model_name_vec_RD[c(1:2)]),
-                                   Model=c(model_name_vec_RD[1:2],model_name_vec_RD[5:6]),
-                                   phi_cov_used=c(model_name_vec_RD[1:2],model_name_vec_RD[5:6]), # p cov if length(cov)=1
-                                   p_cov_used=c(p_cov_used_vec_RD[1:2],p_cov_used_vec_RD[5:6]) # phi cov
+      all_model_tab_RD<-data.frame(Num= seq_along(c(model_name_vec_RD[1],model_name_vec_RD[(2*no_cov+2+no_cov*no_cov):(2*no_cov+2+no_cov*no_cov+no_cov)])),
+                                   Model=c(model_name_vec_RD[1],model_name_vec_RD[(2*no_cov+2+no_cov*no_cov):(2*no_cov+2+no_cov*no_cov+no_cov)]),
+                                   phi_cov_used=c(phi_cov_used_vec_RD[1],phi_cov_used_vec_RD[(2*no_cov+2+no_cov*no_cov):(2*no_cov+2+no_cov*no_cov+no_cov)]), 
+                                   p_cov_used=c(p_cov_used_vec_RD[1],p_cov_used_vec_RD[(2*no_cov+2+no_cov*no_cov):(2*no_cov+2+no_cov*no_cov+no_cov)])
       )
       
     }
@@ -3888,23 +4178,23 @@ all_ana_model_table_RD<-reactive({
       model_name_vec_RD<-all_list_model_tab_RD()$Model
       
       # cov_used_vec_RD
-      
-      p_cov_used<-all_list_model_tab_RD()$p_cov_used
       phi_cov_used<-all_list_model_tab_RD()$phi_cov_used
+      p_cov_used<-all_list_model_tab_RD()$p_cov_used
+      
       
       
       #*** time_spent vector, two cov case
-      time_spent<-rep(c(""),total_no_fits_RD())
+      time_spent<-rep(c(""),length(Num))
       
       
       #*** no. of times hitting the MLE  
       
-      num_max<- rep(c(""),total_no_fits_RD())
+      num_max<- rep(c(""),length(Num))
       
       
       # chechinput to print out the max_logls 
       
-      print_logLs<-rep(c(""),total_no_fits_RD())
+      print_logLs<-rep(c(""),length(Num))
 
       
     } else {
@@ -3923,18 +4213,18 @@ all_ana_model_table_RD<-reactive({
       phi_cov_used<-all_list_model_tab_RD()$phi_cov_used
       
       # if reset or did not hit the run button
-      time_spent<-rep(c(""),total_no_fits_RD())
+      time_spent<-rep(c(""),length(Num))
       
-      num_max<- rep(c(""),total_no_fits_RD())
+      num_max<- rep(c(""),length(Num))
       
-      print_logLs<-rep(c(""),total_no_fits_RD())
+      print_logLs<-rep(c(""),length(Num))
     }
     
     
     # Table to print out *** all_list_
     draft_all_model_ana_tab_RD<-data.frame(Num= Num,
                                            Model=model_name_vec_RD,
-                                           phi_cov_used=p_cov_used,
+                                           phi_cov_used=phi_cov_used,
                                            p_cov_used=p_cov_used,
                                            time_spent=time_spent,
                                            num_max= num_max
@@ -3980,7 +4270,7 @@ all_ana_model_table_RD<-reactive({
     
     flex_Num<-flex_tab$Num
     
-    null_values<-flex_tab$print_logLs
+    #null_values<-flex_tab$print_logLs
     
     #flex_tab$print_logLs<-  paste0('<label><input type="checkbox" id="flex_Num', 
     #                        1:total_no_fits_RD(), '"> <span>', # 1:total_no_models()
@@ -3991,29 +4281,29 @@ all_ana_model_table_RD<-reactive({
     #flex_table[, c("Num","Model"), to = "header"] <- parLeft() # left align the column "Num"
     #flex_table[, c("Num","Model")] <- parLeft() # left align header
     
-    return(flex_ta)
+    return(flex_tab)
   })
   
   
   
   # the inputs created are in input$car1, input$car2, ...
-  output$check_mle_RD <- renderPrint({
+  #output$check_mle_RD <- renderPrint({
     
     
-    flex_Num<-1:total_no_fits_RD()
+  #  flex_Num<-1:total_no_fits_RD()
     
     
     # results
-    res <- unlist(lapply(1:total_no_fits_RD(), function(i) input[[paste0("flex_Num", i)]]))
-    print(res)
+#    res <- unlist(lapply(1:total_no_fits_RD(), function(i) input[[paste0("flex_Num", i)]]))
+#    print(res)
     
-    if (any(res)) {
-      print(flex_Num[res])
-    }
+#    if (any(res)) {
+ #     print(flex_Num[res])
+#    }
     
     
     
-  })
+ # })
 
 
   ################################ (RD) predicted plot
@@ -4147,4 +4437,6 @@ all_ana_model_table_RD<-reactive({
 
 # the end of server function  
   
+  
 })
+
